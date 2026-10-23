@@ -1,0 +1,31 @@
+[project]
+name = "carecompass-ai"
+version = "0.1.0"
+description = "Evidence-aware multi-agent healthcare navigation for ASI:One (Fetch.ai uAgents + Agent Chat Protocol)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "uagents==0.25.5",
+    "uagents-core>=0.4.9",
+    "openai>=1.40.0",
+    "python-dotenv>=1.0",
+    "pydantic>=2.6",
+    "SQLAlchemy>=2.0",
+    "httpx>=0.27",
+    "beautifulsoup4>=4.12",
+    "pypdf>=4.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = ["agents: starts real uAgent processes on ports 8000-8002 and 8010 (slower)",
+           "live: calls real external services (OpenStreetMap Nominatim)"]
+addopts = "-m 'not live'"
+
+[tool.ruff]
+line-length = 125

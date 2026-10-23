@@ -1,0 +1,67 @@
+{
+  "_notice": "SYNTHETIC DEMO DATA. 'Demo Shield Insurance' and 'Sample Care Health' are fictional insurers. Network lists and plan terms below are invented for testing and must never be presented as real insurance information.",
+  "insurers": {
+    "Demo Shield Insurance": {
+      "sources": [
+        {
+          "name": "Demo Shield network hospital directory (synthetic)",
+          "url": "fixture://insurers/demo-shield/network-directory",
+          "retrieved_at": "2026-10-20T09:00:00+00:00",
+          "complete_for_cities": ["Jaipur", "Delhi"],
+          "rows": [
+            {"listed_name": "Aravali Bone and Joint Hosp.", "city": "Jaipur", "postcode": "302017", "in_network": true, "cashless": true},
+            {"listed_name": "Pink City Multi Speciality Hospital Pvt Ltd", "city": "Jaipur", "postcode": "302001", "in_network": true, "cashless": true},
+            {"listed_name": "Amber Sports Injury Centre", "city": "Jaipur", "postcode": "302021", "in_network": true, "cashless": true},
+            {"listed_name": "Hawa Mahal Care Hospital", "city": "Jaipur", "postcode": "302002", "in_network": true, "cashless": false},
+            {"listed_name": "Chandpole Ortho Hospital", "city": "Jaipur", "in_network": true, "cashless": true},
+            {"listed_name": "Lotus Kidney and Stone Hospital", "city": "Jaipur", "postcode": "302015", "in_network": true, "cashless": true},
+            {"listed_name": "Yamuna Urology & Kidney Hospital", "city": "Delhi", "postcode": "110017", "in_network": true, "cashless": true},
+            {"listed_name": "Lodhi Multispeciality Hospital", "city": "Delhi", "postcode": "110003", "in_network": true}
+          ]
+        },
+        {
+          "name": "Demo Shield de-empanelment notice (synthetic)",
+          "url": "fixture://insurers/demo-shield/de-empanelment-2026-10",
+          "retrieved_at": "2026-10-18T09:00:00+00:00",
+          "complete_for_cities": [],
+          "rows": [
+            {"listed_name": "Amber Sports Injury Centre", "city": "Jaipur", "postcode": "302021", "in_network": false, "excerpt": "De-empanelled from the cashless network with effect from 01-Oct-2026."},
+            {"listed_name": "ABJH", "city": "Jaipur", "postcode": "302017", "in_network": true, "excerpt": "ABJH continues as a network provider."}
+          ]
+        }
+      ],
+      "plans": {
+        "Demo Shield Basic": {
+          "document_url": "fixture://insurers/demo-shield/plans/basic-policy-wording",
+          "retrieved_at": "2026-10-20T09:00:00+00:00",
+          "rules": [
+            {"state": "PROCEDURE_EXCLUDED", "keywords": ["acl reconstruction", "ligament reconstruction", "sports injur"],
+             "excerpt": "Section 4.2 Permanent exclusions: treatment of sports injuries including ligament reconstruction (e.g. ACL reconstruction)."}
+          ]
+        },
+        "Demo Shield Plus": {
+          "document_url": "fixture://insurers/demo-shield/plans/plus-policy-wording",
+          "retrieved_at": "2026-10-20T09:00:00+00:00",
+          "rules": [
+            {"state": "WAITING_PERIOD_APPLIES", "keywords": ["acl reconstruction", "knee arthroscopy", "joint replacement", "knee replacement"],
+             "excerpt": "Section 3.3 Specific waiting period: 24 months for joint and ligament surgery including ACL reconstruction."},
+            {"state": "WAITING_PERIOD_APPLIES", "keywords": ["lithotripsy", "ureteroscopy", "kidney stone"],
+             "excerpt": "Section 3.3 Specific waiting period: 24 months for urinary stone procedures."}
+          ]
+        }
+      }
+    },
+    "Sample Care Health": {
+      "sources": [
+        {
+          "name": "Sample Care network directory (synthetic)",
+          "url": "fixture://insurers/sample-care/network-directory",
+          "simulate_unavailable": true,
+          "error": "HTTP 503 Service Unavailable (simulated outage)",
+          "rows": []
+        }
+      ],
+      "plans": {}
+    }
+  }
+}

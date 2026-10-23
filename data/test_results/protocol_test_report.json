@@ -1,0 +1,91 @@
+{
+  "started": "2026-10-22T22:22:01.156187+00:00",
+  "coordinator": "agent1qfmdpwft72uh0ndlafdwgezpsf6egypkvd3xu00w0l4mkeuell0lcxtja0l",
+  "steps": [
+    {
+      "step": "request",
+      "text_preview": "**Concern:** ACL tear \u2192 looking for **Orthopaedics** services\n_ACL injuries are usually evaluated by orthopaedic / sports-medicine services._\n**City:** Jaipur\n**Insurer:** Demo Shield Insurance\n\n**Demo data notice:** these hospitals and insurer records are *synthetic (fictional)* and are used to dem",
+      "card_kind": "carousel",
+      "card_valid": true,
+      "card_items": 3
+    },
+    {
+      "step": "select",
+      "text_preview": "**Aravali Bone & Joint Hospital**\n- Address: 12 Synthetic Marg, Malviya Nagar, Jaipur\n- Why ranked: Ranked here because orthopaedics services are advertised on its own profile; it is in Jaipur; it appears in Demo Shield Insurance's network list (a listing alone does not confirm your claim).\n- Insura",
+      "card_kind": "detail",
+      "card_valid": true,
+      "card_items": null
+    },
+    {
+      "step": "review",
+      "text_preview": "**Please confirm:** save this shortlist (1. Aravali Bone & Joint Hospital; 2. Pink City Multispeciality Hospital; 3. Amber Sports Injury Centre) with **Aravali Bone & Joint Hospital** as your choice and its supporting evidence to your CareCompass record?\nNo report text is stored, and nothing is sent",
+      "card_kind": "review",
+      "card_valid": true,
+      "card_items": null
+    },
+    {
+      "step": "approve",
+      "text_preview": "\u2705 Saved and verified. Your reference is **CC-GAL8D345**.\n\n**Verification**\n- record read back\n- payload hash matches approval\n- 16 evidence records present\n\n**Saved shortlist**\n- 1. Aravali Bone & Joint Hospital - NETWORK_VERIFIED, CASHLESS_LISTED, PLAN_DETAILS_REQUIRED \u2190 your choice\n- 2. Pink City ",
+      "card_kind": null,
+      "confirmation_id": "CC-GAL8D345"
+    },
+    {
+      "step": "approve_again",
+      "text_preview": "This shortlist was already saved - no duplicate was created. Reference: **CC-GAL8D345**\n\n**Verification**\n- already completed earlier\n\n**Saved shortlist**\n- 1. Aravali Bone & Joint Hospital - NETWORK_VERIFIED, CASHLESS_LISTED, PLAN_DETAILS_REQUIRED \u2190 your choice\n- 2. Pink City Multispeciality Hospit",
+      "card_kind": null,
+      "confirmation_id": "CC-GAL8D345"
+    }
+  ],
+  "checks": {
+    "every_message_acknowledged": true,
+    "shortlist_carousel_card": true,
+    "detail_card_on_selection": true,
+    "review_card_before_action": true,
+    "confirmation_issued_after_approval": true,
+    "duplicate_approval_same_id": true,
+    "hospital_agent_received_task": true,
+    "insurer_agent_received_task": true,
+    "exactly_one_shortlist_persisted": true,
+    "confirmation_id_matches_db_record": true,
+    "both_research_agents_succeeded": true,
+    "action_verified_in_db": true
+  },
+  "latencies": {
+    "request": 0.15,
+    "select": 0.04,
+    "review": 0.04,
+    "approve": 0.07,
+    "approve_again": 0.04
+  },
+  "acks_received": 6,
+  "messages_sent": 6,
+  "confirmation_id": "CC-GAL8D345",
+  "db": {
+    "shortlists": [
+      [
+        "CC-GAL8D345",
+        "case_cdb0d1d11907440c"
+      ]
+    ],
+    "agent_tasks": [
+      [
+        "hospital-agent",
+        "succeeded",
+        1,
+        24
+      ],
+      [
+        "insurer-agent",
+        "succeeded",
+        1,
+        28
+      ]
+    ],
+    "action_executions": [
+      [
+        "succeeded",
+        1
+      ]
+    ]
+  }
+}

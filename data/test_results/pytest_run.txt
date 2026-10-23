@@ -1,0 +1,67 @@
+tests/e2e/test_agents_e2e.py::test_15_16_acp_and_multi_agent_over_real_uagents PASSED
+tests/e2e/test_agents_e2e.py::test_13_agent_timeout_bounded_retries PASSED
+tests/e2e/test_agents_e2e.py::test_agent_reply_validated PASSED
+tests/integration/test_workflow.py::test_20_complete_journey PASSED
+tests/integration/test_workflow.py::test_10_rejection_executes_nothing PASSED
+tests/integration/test_workflow.py::test_13_insurer_agent_unavailable_gives_partial_results PASSED
+tests/integration/test_workflow.py::test_13_hospital_agent_unavailable_then_retry PASSED
+tests/integration/test_workflow.py::test_19_conversation_continuity PASSED
+tests/integration/test_workflow.py::test_08_emergency_in_workflow_stops_research PASSED
+tests/integration/test_workflow.py::test_plan_exclusion_reaches_user PASSED
+tests/integration/test_workflow.py::test_stale_card_and_access_control PASSED
+tests/integration/test_workflow.py::test_no_reliable_results_does_not_invent PASSED
+tests/integration/test_workflow.py::test_report_path_end_to_end PASSED
+tests/unit/test_infrastructure.py::test_entity_resolution PASSED
+tests/unit/test_infrastructure.py::test_state_machine_blocks_invalid_transitions PASSED
+tests/unit/test_infrastructure.py::test_14_card_metadata_contract PASSED
+tests/unit/test_infrastructure.py::test_14_selection_parsing_json_and_prose PASSED
+tests/unit/test_infrastructure.py::test_ssrf_url_syntax_rejected[file:///etc/passwd] PASSED
+tests/unit/test_infrastructure.py::test_ssrf_url_syntax_rejected[http://localhost/x] PASSED
+tests/unit/test_infrastructure.py::test_ssrf_url_syntax_rejected[http://127.0.0.1/] PASSED
+tests/unit/test_infrastructure.py::test_ssrf_url_syntax_rejected[http://10.0.0.5/] PASSED
+tests/unit/test_infrastructure.py::test_ssrf_url_syntax_rejected[http://169.254.169.254/latest/meta-data] PASSED
+tests/unit/test_infrastructure.py::test_ssrf_url_syntax_rejected[http://user:pw@example.com/] PASSED
+tests/unit/test_infrastructure.py::test_ssrf_url_syntax_rejected[http://example.com:8080/] PASSED
+tests/unit/test_infrastructure.py::test_ssrf_url_syntax_rejected[gopher://example.com] PASSED
+tests/unit/test_infrastructure.py::test_ssrf_url_syntax_rejected[http://[::1]/] PASSED
+tests/unit/test_infrastructure.py::test_ssrf_dns_rebinding_rejected PASSED
+tests/unit/test_infrastructure.py::test_redirect_to_private_address_blocked PASSED
+tests/unit/test_infrastructure.py::test_fetch_size_cap_and_robots PASSED
+tests/unit/test_infrastructure.py::test_redaction PASSED
+tests/unit/test_infrastructure.py::test_18_injected_text_in_sources_cannot_change_decisions PASSED
+tests/unit/test_infrastructure.py::test_11_duplicate_approval_single_side_effect PASSED
+tests/unit/test_infrastructure.py::test_12_db_failure_retries_then_succeeds PASSED
+tests/unit/test_infrastructure.py::test_12_db_failure_exhausted_no_confirmation PASSED
+tests/unit/test_infrastructure.py::test_osm_source_builds_grounded_evidence PASSED
+tests/unit/test_intelligence.py::test_06_known_condition_maps_to_specialty_without_asking_specialty PASSED
+tests/unit/test_intelligence.py::test_07_symptoms_only_routes_without_diagnosis PASSED
+tests/unit/test_intelligence.py::test_08_emergency_stops_routine_flow[Sudden severe chest pain and difficulty breathing.] PASSED
+tests/unit/test_intelligence.py::test_08_emergency_stops_routine_flow[my father's face is drooping and his speech is slurred] PASSED
+tests/unit/test_intelligence.py::test_08_emergency_stops_routine_flow[I can't breathe properly] PASSED
+tests/unit/test_intelligence.py::test_08_emergency_stops_routine_flow[she fainted and is unconscious] PASSED
+tests/unit/test_intelligence.py::test_safety_negation_and_self_harm PASSED
+tests/unit/test_intelligence.py::test_09_report_extraction_preserves_uncertainty_and_negation PASSED
+tests/unit/test_intelligence.py::test_report_hedged_only_is_not_upgraded PASSED
+tests/unit/test_intelligence.py::test_report_contradicting_user_claim_is_flagged PASSED
+tests/unit/test_intelligence.py::test_pdf_text_extraction PASSED
+tests/unit/test_intelligence.py::test_insurer_and_city_aliases PASSED
+tests/unit/test_intelligence.py::test_llm_fields_must_be_grounded_in_user_text PASSED
+tests/unit/test_intelligence.py::test_asi1_structured_output_validated_and_repaired PASSED
+tests/unit/test_intelligence.py::test_asi1_failures_become_unavailable PASSED
+tests/unit/test_intelligence.py::test_intent_parser_falls_back_to_rules_when_asi1_fails PASSED
+tests/unit/test_matching.py::test_01_sources_agree_network_verified_but_qualified PASSED
+tests/unit/test_matching.py::test_02_procedure_excluded_never_claimed_covered PASSED
+tests/unit/test_matching.py::test_03_other_city_excluded_unless_nearby_allowed PASSED
+tests/unit/test_matching.py::test_04_sources_disagree_marked_uncertain_with_conflict PASSED
+tests/unit/test_matching.py::test_05_insurer_unavailable_is_not_out_of_network PASSED
+tests/unit/test_matching.py::test_not_found_only_when_list_is_complete PASSED
+tests/unit/test_matching.py::test_unbranched_listing_does_not_verify_two_branches PASSED
+tests/unit/test_matching.py::test_missing_specialty_is_never_primary PASSED
+tests/unit/test_matching.py::test_community_directory_specialty_is_not_verified PASSED
+tests/unit/test_matching.py::test_no_insurance_drops_network_dimension PASSED
+tests/unit/test_matching.py::test_17_verifier_rejects_fabricated_citations_and_unsupported_claims PASSED
+tests/unit/test_matching.py::test_verifier_downgrades_network_claim_without_listing PASSED
+tests/unit/test_matching.py::test_verifier_removes_duplicates PASSED
+tests/unit/test_matching.py::test_workflow_level_rules PASSED
+tests/unit/test_matching.py::test_ranking_weights_are_configurable PASSED
+====================== 66 passed, 1 deselected in 27.15s ======================

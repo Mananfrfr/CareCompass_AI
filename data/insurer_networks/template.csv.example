@@ -1,0 +1,5 @@
+# insurer: Example Insurer
+# source_url: https://www.example.com/network-hospitals
+# retrieved_at: 2026-10-20
+# complete_for_cities:
+name,city,address,postcode,cashless

@@ -1,0 +1,13 @@
+# Pinned versions verified on Python 3.12 (Windows 11) on 2026-10-23.
+uagents==0.25.5
+uagents-core==0.4.12
+openai==3.37.0
+python-dotenv>=1.0
+pydantic==2.14.1
+SQLAlchemy==2.1.6
+httpx==0.28.1
+beautifulsoup4==4.15.0
+pypdf==6.21.2
+# tests
+pytest==9.1.1
+pytest-asyncio==1.4.0
