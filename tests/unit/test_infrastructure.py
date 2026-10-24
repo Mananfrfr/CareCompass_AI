@@ -67,7 +67,7 @@ def test_14_selection_parsing_json_and_prose():
     assert parse_selection("The user picked hospital syn-c to view evidence.", ids).hospital_id == "syn-c"
     assert parse_selection("2", ids).hospital_id == "syn-b"
     assert parse_selection("show me the third one", ids).hospital_id == "syn-c"
-    assert parse_selection("The user chose Approve & save", ids).action == "approve"
+    assert parse_selection("The user chose Approve & save", ids).action == "clarify_approval"
     assert parse_selection("don't approve that", ids).action == "cancel"
     assert parse_selection("save it", ids).action == "review"  # save shows the approval step first
     assert parse_selection("Revise or cancel", ids).action == "cancel"

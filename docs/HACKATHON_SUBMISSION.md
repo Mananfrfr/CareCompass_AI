@@ -20,12 +20,12 @@ It never says a treatment is "covered". Network listing, plan exclusions and cas
 
 | Requirement | How it is met | Status |
 |---|---|---|
-| ≥1 agent registered on Agentverse | Coordinator: `mailbox=True`, `publish_agent_details=True`. Almanac API registration succeeds. | ✅ registration verified in logs · 👤 mailbox Connect pending |
+| ≥1 agent registered on Agentverse | Coordinator: `mailbox=True`, `publish_agent_details=True`. Almanac API registration succeeds. | ✅ registration verified in logs · ✅ mailbox connected |
 | Agent Chat Protocol | `Protocol(spec=chat_protocol_spec)`, `publish_manifest=True`, acknowledgements, multi-turn | ✅ manifest published (log) · ✅ local ACP test 12/12 |
-| Discoverable/usable in ASI:One | Agentverse profile README + keywords (`docs/AGENT_PROFILE.md`) | 👤 verify after mailbox Connect |
+| Discoverable/usable in ASI:One | Agentverse profile README + keywords (`docs/AGENT_PROFILE.md`) | ✅ profile marked Active / ASI Available |
 | Meaningful tool execution / multi-agent | 3 uAgents with typed protocols. Live OSM data. DB action with read-back verification. | ✅ |
-| Workflow completes inside ASI:One | Cards + text fallback, no external frontend | 👤 record it in a shared chat |
-| Public GitHub repo with instructions | This repository (README, docs, tests) | 👤 push and make public |
+| Workflow completes inside ASI:One | Cards + text fallback, no external frontend | ✅ synthetic card journey completed; invite link supplied; independent judge access still to verify |
+| Public GitHub repo with instructions | This repository (README, docs, tests) | Public repository exists; deployment fixes included |
 
 ## Bonus criteria addressed
 
@@ -38,20 +38,20 @@ It never says a treatment is "covered". Network listing, plan exclusions and cas
 
 ## Submission checklist (fill on event day — do not invent values)
 
-- [ ] Public GitHub repository URL: `______________________`
-- [ ] Agentverse profile URL, coordinator (CareCompass AI): `______________________`
+- [ ] Public GitHub repository URL: https://github.com/Mananfrfr/CareCompass_AI
+- [ ] Agentverse profile URL, coordinator (CareCompass AI): https://agentverse.ai/agents/details/agent1qf4xxsxv47fa6ghqvv7x8s6lhqw66vp52zgldq8w0xyueyd5cnkavhkl4dm/profile
 - [ ] Agentverse profile URL(s), research agents (optional): `______________________`
-- [ ] Public ASI:One shared chat URL showing the full workflow: `______________________`
+- [ ] ASI:One chat invite: https://asi1.ai/invite?channelInviteKey=vOe6V4S_Ep2Y0Q83V34GfIS0SbD5M4VI9jueaWYYwDo (opens the correct demo conversation for the signed-in owner; verify access with another account before submission). This is an invitation, not a verified anonymous read-only transcript.
 - [ ] Demo video (3–5 min, follows `docs/DEMO_SCRIPT.md`): `______________________`
 - [ ] README agent names and addresses match `python scripts/run_agents.py --addresses`
 - [ ] README contains both badges (`innovationlab`, `hackathon`) ✅ already present
 - [ ] `.env` is NOT committed (`git status` shows it ignored)
 - [ ] `python -m pytest` is green on the final commit
 
-## Manual steps that need you (👤)
+## Deployment steps and remaining submission work
 
-1. **ASI1 key (optional but recommended):** create a key at https://asi1.ai/dashboard/api-keys and add it to `.env` as `ASI1_API_KEY=`. Then run the demo once and confirm that the log line reads `ASI1: configured`.
-2. **Agentverse mailbox:** follow `docs/AGENTVERSE_DEPLOYMENT.md` step 4.
+1. **ASI1 key:** configured and live-tested on 2026-10-24; keep `.env` private.
+2. **Agentverse mailbox:** connected. Keep the local agents running with internet access during judging.
 3. **ASI:One test and share link:** follow `docs/AGENTVERSE_DEPLOYMENT.md` step 6.
 4. **GitHub:** create a public repo and push. Then check that `.env` and `data/*.db` are absent from the repo.
 5. **Video:** record it following `docs/DEMO_SCRIPT.md`.
@@ -59,3 +59,13 @@ It never says a treatment is "covered". Network listing, plan exclusions and cas
 ## 60-second pitch
 
 "Choosing a hospital under insurance in India means guessing the specialty, searching hospitals, and reading insurer lists that often disagree. CareCompass does that work inside ASI:One. You send one message. Two specialist agents research hospitals and insurer networks in parallel. CareCompass matches their evidence, flags contradictions instead of hiding them, and ranks options with a score you can inspect. A deterministic verifier removes anything we can't source, so it never says 'covered' and never invents a hospital. When you approve, it saves the shortlist and evidence, reads the record back to prove it's there, and gives you a real reference. If something breaks — an insurer site is down, or a database write fails — it tells you exactly what wasn't checked. That's what we mean by trustworthy intent-to-action."
+
+## ASI:One verification on 2026-10-23
+
+- 89 automated tests passed; live OpenStreetMap test passed separately.
+- Interactive carousel, detail and review cards rendered in ASI:One.
+- Approval returned `CC-9DVGJS5A`, verified against the local SQLite record.
+- Repeated approval returned the same reference; database still had exactly one shortlist.
+- Test conversation (signed-in access; not yet a verified public share URL): https://asi1.ai/chat/fd168176-1064-4e3e-8438-86c4c1f7ec61
+- On 2026-10-24, the configured ASI1 key completed a live structured extraction call (one API call, zero failures). The sample needed no model-added fields, so its extraction label stayed `rules`. Agents restarted with `ASI1: configured`; runtime also logged a successful API response. The initial card demo used the deterministic fallback.
+- Data mode remains synthetic fixture data. No real insurer network list is imported.

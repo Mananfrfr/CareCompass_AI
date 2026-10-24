@@ -17,7 +17,7 @@ Leave `CARECOMPASS_DATA_MODE=fixture` for the reproducible demo. Switch to `live
 ## 2. Pre-flight
 
 ```bash
-python -m pytest                    # 66 tests incl. the real 3-agent ACP journey
+python -m pytest                    # 89 tests incl. the real 3-agent ACP journey
 python scripts/test_protocol.py     # writes data/test_results/protocol_test_report.json
 ```
 

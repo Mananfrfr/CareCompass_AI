@@ -91,7 +91,7 @@ def _specialty_from_text(text: str, specialty: str) -> str | None:
         return None
     low = text.lower()
     for kw in spec.site_keywords:
-        pattern = rf"\b{re.escape(kw)}"
+        pattern = rf"\b{re.escape(kw)}\b"
         m = re.search(pattern, low)
         if m:
             start = max(0, m.start() - 80)

@@ -81,6 +81,19 @@ class CareCompassWorkflow:
         if not text and not report_text:
             return [Reply("\n\n".join(notices) or WELCOME)]
 
+        # Safety takes precedence over commands, card actions and duplicate approvals.
+        safety = assess(f"{text}\n{report_text or ''}")
+        if safety.is_emergency:
+            case = self.repo.active_case(session_key)
+            if case is None:
+                case = self.repo.create_case(session_key, "fixture" if self.settings.fixture_mode else "live")
+            req = self._request(case).model_copy(update={
+                "urgency": Urgency.EMERGENCY, "urgency_flags": safety.flags,
+            })
+            case.request_json = req.model_dump_json()
+            self._move(case, CaseState.URGENT_GUIDANCE, trace, flags=safety.flags)
+            return [Reply(safety.guidance or "")]
+
         if HELP.match(text):
             return [Reply(HELP_TEXT)]
         if DELETE.search(text):
@@ -109,6 +122,9 @@ class CareCompassWorkflow:
         state = CaseState(case.state)
         if state in SHORTLIST_STATES:
             sel = parse_selection(text, self._ids(case), self._names(case))
+            if sel.action == "clarify_approval":
+                return [Reply("Nothing was saved. To save the current shortlist, reply **approve** or use the "
+                              "approval button. You can also say **cancel** or tell me what to change.")]
             if sel.action:
                 return await self._on_selection(case, sel, research, trace)
             self._move(case, CaseState.COLLECTING_INPUT, trace)  # treat as a revision of the request

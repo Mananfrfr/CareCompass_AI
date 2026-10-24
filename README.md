@@ -68,18 +68,18 @@ The full design is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and the state
 
 | Agent | Role | Protocols | Address |
 |---|---|---|---|
-| **CareCompass AI** (Coordinator) | Public ASI:One agent. Handles conversation, safety, orchestration, cards, approval and action. | `AgentChatProtocol` 0.3.0 (manifest published), CareCompass research protocols (client) | `agent1qg0ls5xx5xff8zs8d2xpjr4ye92tymamcyllvw2u2kvtq7k7t8uv5jh0ppg` * |
-| **Hospital Verification Agent** | Independent hospital discovery and specialty/location evidence. | `CareCompassHospitalResearch` 0.1.0 | `agent1qv60axczyzymf4zwqyjfzm64g3ycftwzsgulm3v34waurnrjdfa7c5w004j` * |
-| **Insurer Research Agent** | Network listings, de-listings, plan exclusions and waiting periods, with sources. | `CareCompassInsurerResearch` 0.1.0 | `agent1qtw9t4wyq9nxalc88ncdn7067qwgku08r06phala7m2d3j5ngatqsfyuskl` * |
+| **CareCompass AI** (Coordinator) | Public ASI:One agent. Handles conversation, safety, orchestration, cards, approval and action. | `AgentChatProtocol` 0.3.0 (manifest published), CareCompass research protocols (client) | `agent1qf4xxsxv47fa6ghqvv7x8s6lhqw66vp52zgldq8w0xyueyd5cnkavhkl4dm` * |
+| **Hospital Verification Agent** | Independent hospital discovery and specialty/location evidence. | `CareCompassHospitalResearch` 0.1.0 | `agent1qdzx6pvjjdnp2mhg9039ddgv9x0lw8n38fhqdxkkz04k4p5sl80x5m7v4aj` * |
+| **Insurer Research Agent** | Network listings, de-listings, plan exclusions and waiting periods, with sources. | `CareCompassInsurerResearch` 0.1.0 | `agent1qt6ha0v4ge4sd6fl9lsgple7ly0l9d35kfls5wzrs08kzu58tcpax5v0dd8` * |
 
-\* These addresses come from the seeds in the maintainer's local `.env`. A new `--init-env` produces different addresses. Print yours with `python scripts/run_agents.py --addresses`. **Agentverse profile URL:** _to be added after the mailbox is connected (manual step, see below)._
+\* These addresses come from the seeds in the maintainer's local `.env`. A new `--init-env` produces different addresses. Print yours with `python scripts/run_agents.py --addresses`. **Agentverse profile:** [CareCompass AI](https://agentverse.ai/agents/details/agent1qf4xxsxv47fa6ghqvv7x8s6lhqw66vp52zgldq8w0xyueyd5cnkavhkl4dm/profile). **Chat:** [Open in ASI:One](https://asi1.ai/ai/agent1qf4xxsxv47fa6ghqvv7x8s6lhqw66vp52zgldq8w0xyueyd5cnkavhkl4dm).
 
 ## Quick start
 
 Requires Python 3.10+ (tested on 3.12).
 
 ```bash
-git clone <your-repo-url> carecompass-ai && cd carecompass-ai
+git clone https://github.com/Mananfrfr/CareCompass_AI.git carecompass-ai && cd carecompass-ai
 python -m venv .venv
 # Windows: .venv\Scripts\activate      Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
@@ -133,22 +133,26 @@ Each status means only what it says.
 
 | Capability | Implemented | Tested locally | Tested with live API | Tested inside ASI:One |
 |---|---|---|---|---|
-| ACP handler (ack, text, start-session, resources, metadata) | ✅ | ✅ real uAgents (`test_protocol.py`) | n/a | ❌ needs mailbox connection |
+| ACP handler (ack, text, start-session, resources, metadata) | ✅ | ✅ real uAgents (`test_protocol.py`) | n/a | ✅ synthetic text/card journey |
 | Manifest publication to Agentverse | ✅ | ✅ log: `Manifest published successfully` | ✅ | ❌ |
 | Almanac registration | ✅ | ✅ log: `Registration on Almanac API successful` | ✅ | n/a |
-| Agentverse mailbox | ✅ (`mailbox=True`) | ❌ | ❌ **manual inspector Connect required** | ❌ |
-| Coordinator ↔ Hospital/Insurer agents (typed messages) | ✅ | ✅ 3 processes, 12/12 checks | n/a | ❌ |
-| Interactive Cards (carousel/detail/review) + selection parsing | ✅ per documented schema | ✅ schema + round-trip | n/a | ❌ rendering not yet observed |
+| Agentverse mailbox | ✅ (`mailbox=True`) | ✅ | ✅ connected 2026-10-23 | ✅ synthetic journey |
+| Coordinator ↔ Hospital/Insurer agents (typed messages) | ✅ | ✅ 3 processes, 12/12 checks | n/a | ✅ synthetic journey |
+| Interactive Cards (carousel/detail/review) + selection parsing | ✅ per documented schema | ✅ schema + round-trip | n/a | ✅ carousel/detail/review and callbacks |
 | Text fallback for every step | ✅ | ✅ | n/a | ❌ |
-| ASI1 intent extraction + shortlist summary | ✅ with grounding + validation + fallback | ✅ with mocked client | ❌ **no API key available in build env** | ❌ |
+| ASI1 intent extraction + shortlist summary | Grounding + validation + fallback | Mocked client tests pass | Live structured extraction passed, 2026-10-24 | Runtime configured; initial card demo used rules |
 | Safety routing, report parsing, question engine | ✅ | ✅ | n/a | ❌ |
 | Live hospital discovery (OpenStreetMap) | ✅ | ✅ | ✅ `pytest -m live` | ❌ |
 | Hospital website specialty verification | ✅ | ✅ (mock transport) | ⚠️ code path ran, but no top Jaipur candidate had a website tag | ❌ |
 | Official insurer network list import | ✅ | ✅ | ❌ no official list imported yet (manual) | ❌ |
 | PDF report via ResourceContent URL | ✅ (SSRF-guarded download + pypdf) | ✅ extraction | ❌ ASI:One attachment URL format not yet observed | ❌ |
 | Image report OCR | ❌ not implemented (asks user to paste text) | — | — | — |
-| Approval → idempotent save → read-back verify → ID | ✅ | ✅ incl. DB failure + duplicates | n/a | ❌ |
+| Approval → idempotent save → read-back verify → ID | ✅ | ✅ incl. DB failure + duplicates | n/a | ✅ CC-9DVGJS5A; one record after repeated approval |
 | External inquiry / booking / payments | ❌ not implemented (see [LIMITATIONS](docs/LIMITATIONS.md)) | — | — | — |
+
+## Latest verification (2026-10-23)
+
+The current code passes **89 tests**, including a real three-agent ACP journey. Regression tests cover emergency interruption during approval, ambiguous consent, and specialty keyword false positives. The coordinator mailbox is connected on Agentverse. A synthetic ASI:One conversation completed the carousel, detail, review, approval and duplicate-approval flow. The saved reference `CC-9DVGJS5A` matched SQLite, with exactly one saved shortlist. ASI:One prefixes callbacks with the recipient mention; the transport now removes only its own exact address before parsing. Earlier measurements below describe the initial build.
 
 ## Measured results
 

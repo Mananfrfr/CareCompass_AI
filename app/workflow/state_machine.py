@@ -44,6 +44,10 @@ TRANSITIONS: dict[CaseState, set[CaseState]] = {
     S.FAILED: set(),
 }
 TERMINAL_STATES = frozenset(s for s, nxt in TRANSITIONS.items() if not nxt)
+# Every active workflow can be interrupted by a newly reported emergency.
+for _state in TRANSITIONS:
+    if _state not in TERMINAL_STATES:
+        TRANSITIONS[_state].add(S.URGENT_GUIDANCE)
 # States in which the user is looking at a shortlist and may select / approve.
 SHORTLIST_STATES = frozenset({S.AWAITING_APPROVAL, S.PARTIAL_RESULTS})
 

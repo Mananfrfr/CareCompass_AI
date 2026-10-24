@@ -45,6 +45,7 @@ from app.research.service import ResearchOutcome
 from app.schemas.hospital import HospitalResearchQuery, HospitalResearchResult
 from app.schemas.insurance import InsurerResearchQuery, InsurerResearchResult
 from app.security.privacy import session_key, summarize_for_log
+from app.ui.card_handlers import strip_recipient_mention
 from app.workflow.orchestrator import WELCOME, CareCompassWorkflow, Reply
 
 settings = get_settings()
@@ -155,6 +156,7 @@ async def on_chat(ctx: Context, sender: str, msg: ChatMessage) -> None:
         elif isinstance(item, EndSessionContent):
             ctx.logger.info("session ended by %s", sender[:16])
     text = "\n".join(t for t in texts if t).strip()
+    text = strip_recipient_mention(text, ctx.agent.address)
     ctx.logger.info("chat from %s: %s report=%s", sender[:16], summarize_for_log(text), bool(report_text))
     if not text and not report_text and not notices:
         if started:

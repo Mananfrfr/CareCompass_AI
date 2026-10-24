@@ -15,6 +15,13 @@ ACTIONS = {"select_hospital", "review", "approve", "cancel", "back", "revise"}
 ORDINALS = {"first": 1, "1st": 1, "second": 2, "2nd": 2, "third": 3, "3rd": 3}
 
 
+def strip_recipient_mention(text: str, address: str) -> str:
+    """ASI:One prefixes both chat text and card JSON with the recipient address."""
+    if not address:
+        return text
+    return re.sub(rf"^\s*@{re.escape(address)}\s+", "", text, count=1)
+
+
 @dataclass
 class Selection:
     action: str | None = None
@@ -26,11 +33,9 @@ class Selection:
 
 def _from_json(text: str) -> Selection | None:
     stripped = text.strip()
-    start, end = stripped.find("{"), stripped.rfind("}")
-    if start == -1 or end <= start:
-        return None
     try:
-        data = json.loads(stripped[start : end + 1])
+        # Never execute an action embedded in a quotation or longer sentence.
+        data = json.loads(stripped)
     except ValueError:
         return None
     if not isinstance(data, dict) or data.get("action") not in ACTIONS:
@@ -60,11 +65,15 @@ def parse_selection(text: str, ranked_ids: list[str], names: dict[str, str] | No
             hospital_id = ranked_ids[idx - 1]
 
     negated = re.search(r"\b(?:don'?t|do not|not|never)\s+(?:approve|save|confirm)", low)
-    # Only explicit approval words execute; "save ..." first shows the review/approval step.
-    if re.search(r"\b(?:approve[ds]?|confirm(?:ed)?|yes|go ahead|proceed)\b", low) and not negated:
-        return Selection(action="approve", hospital_id=hospital_id)
     if negated or re.search(r"\b(?:cancel(?:led)?|reject(?:ed)?|no thanks|stop|revise)\b", low) or low in {"no", "nope"}:
         return Selection(action="cancel")
+    # Only complete, unambiguous consent phrases execute. Planner prose gets a
+    # clarification instead of treating a mention of consent as consent itself.
+    if re.fullmatch(r"(?:please )?(?:i )?(?:approve|confirm|yes|go ahead|proceed)"
+                    r"(?: (?:saving (?:the |this )?shortlist|the shortlist))?[.!]*", low):
+        return Selection(action="approve", hospital_id=hospital_id)
+    if re.search(r"\b(?:approve[ds]?|confirm(?:ed)?|yes|go ahead|proceed)\b", low):
+        return Selection(action="clarify_approval")
     if re.search(r"\b(?:back to (?:the )?(?:list|shortlist)|show (?:the )?(?:list|shortlist)|go back)\b", low) or low == "back":
         return Selection(action="back")
     if re.search(r"\bsave\b", low):

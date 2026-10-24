@@ -22,7 +22,7 @@ SPECIALTIES: dict[str, Specialty] = {
     s.key: s
     for s in [
         Specialty("orthopaedics", "Orthopaedics", ("orthopaedics", "orthopedics", "trauma"),
-                  ("orthopaedic", "orthopedic", "sports medicine", "sports injury", "arthroscopy", "joint replacement", "ortho")),
+                  ("orthopaedic", "orthopaedics", "orthopedic", "orthopedics", "sports medicine", "sports injury", "arthroscopy", "joint replacement", "ortho")),
         Specialty("urology", "Urology", ("urology",),
                   ("urology", "urologist", "kidney stone", "lithotripsy", "uro")),
         Specialty("ophthalmology", "Ophthalmology (eye care)", ("ophthalmology",),
@@ -46,7 +46,7 @@ SPECIALTIES: dict[str, Specialty] = {
         Specialty("nephrology", "Nephrology (kidney medicine)", ("nephrology",),
                   ("nephrology", "dialysis", "kidney")),
         Specialty("paediatrics", "Paediatrics", ("paediatrics", "pediatrics"),
-                  ("paediatric", "pediatric", "child")),
+                  ("paediatric", "paediatrics", "pediatric", "pediatrics", "child")),
         Specialty("oncology", "Oncology", ("oncology",),
                   ("oncology", "cancer")),
         Specialty("endocrinology", "Endocrinology", ("endocrinology", "diabetology"),

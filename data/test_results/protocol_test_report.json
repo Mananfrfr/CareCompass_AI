@@ -1,6 +1,6 @@
 {
-  "started": "2026-10-22T22:22:01.156187+00:00",
-  "coordinator": "agent1qfmdpwft72uh0ndlafdwgezpsf6egypkvd3xu00w0l4mkeuell0lcxtja0l",
+  "started": "2026-10-23T16:45:58.559225+00:00",
+  "coordinator": "agent1qtrgzhedp8us852905fcwj5xvvk3ddwmmmtxlxa2p33r4gmlzzzjj0zmtgx",
   "steps": [
     {
       "step": "request",
@@ -25,15 +25,15 @@
     },
     {
       "step": "approve",
-      "text_preview": "\u2705 Saved and verified. Your reference is **CC-GAL8D345**.\n\n**Verification**\n- record read back\n- payload hash matches approval\n- 16 evidence records present\n\n**Saved shortlist**\n- 1. Aravali Bone & Joint Hospital - NETWORK_VERIFIED, CASHLESS_LISTED, PLAN_DETAILS_REQUIRED \u2190 your choice\n- 2. Pink City ",
+      "text_preview": "\u2705 Saved and verified. Your reference is **CC-VSRFNAL7**.\n\n**Verification**\n- record read back\n- payload hash matches approval\n- 16 evidence records present\n\n**Saved shortlist**\n- 1. Aravali Bone & Joint Hospital - NETWORK_VERIFIED, CASHLESS_LISTED, PLAN_DETAILS_REQUIRED \u2190 your choice\n- 2. Pink City ",
       "card_kind": null,
-      "confirmation_id": "CC-GAL8D345"
+      "confirmation_id": "CC-VSRFNAL7"
     },
     {
       "step": "approve_again",
-      "text_preview": "This shortlist was already saved - no duplicate was created. Reference: **CC-GAL8D345**\n\n**Verification**\n- already completed earlier\n\n**Saved shortlist**\n- 1. Aravali Bone & Joint Hospital - NETWORK_VERIFIED, CASHLESS_LISTED, PLAN_DETAILS_REQUIRED \u2190 your choice\n- 2. Pink City Multispeciality Hospit",
+      "text_preview": "This shortlist was already saved - no duplicate was created. Reference: **CC-VSRFNAL7**\n\n**Verification**\n- already completed earlier\n\n**Saved shortlist**\n- 1. Aravali Bone & Joint Hospital - NETWORK_VERIFIED, CASHLESS_LISTED, PLAN_DETAILS_REQUIRED \u2190 your choice\n- 2. Pink City Multispeciality Hospit",
       "card_kind": null,
-      "confirmation_id": "CC-GAL8D345"
+      "confirmation_id": "CC-VSRFNAL7"
     }
   ],
   "checks": {
@@ -51,20 +51,20 @@
     "action_verified_in_db": true
   },
   "latencies": {
-    "request": 0.15,
-    "select": 0.04,
-    "review": 0.04,
-    "approve": 0.07,
-    "approve_again": 0.04
+    "request": 0.24,
+    "select": 0.08,
+    "review": 0.07,
+    "approve": 0.15,
+    "approve_again": 0.08
   },
   "acks_received": 6,
   "messages_sent": 6,
-  "confirmation_id": "CC-GAL8D345",
+  "confirmation_id": "CC-VSRFNAL7",
   "db": {
     "shortlists": [
       [
-        "CC-GAL8D345",
-        "case_cdb0d1d11907440c"
+        "CC-VSRFNAL7",
+        "case_87f5b0d52ab140f6"
       ]
     ],
     "agent_tasks": [
@@ -72,13 +72,13 @@
         "hospital-agent",
         "succeeded",
         1,
-        24
+        36
       ],
       [
         "insurer-agent",
         "succeeded",
         1,
-        28
+        48
       ]
     ],
     "action_executions": [
