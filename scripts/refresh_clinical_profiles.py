@@ -12,6 +12,10 @@ import httpx
 from bs4 import BeautifulSoup
 
 PROFILES = [
+    ("cmc-ranipet", "CMC Vellore - Ranipet Campus", "Ranipet", "Tamil Nadu", "oncology",
+     "https://www.cmch-vellore.edu/clinical-haematology/", ["paediatric", "leukaemia", "ranipet"],
+     ["paediatric_care", "paediatric_oncology", "haematology", "outpatient_consultation"],
+     "Clinical Haematology at Ranipet lists paediatric leukemia care, chemotherapy and outpatient clinics."),
     ("aiims-nagpur", "AIIMS Nagpur", "Nagpur", "Maharashtra", "nephrology",
      "https://aiimsnagpur.edu.in/nephrology-current-available-services", ["dialysis"],
      ["dialysis", "nephrology_support", "outpatient_consultation"], "Department lists dialysis services and a nephrology outpatient clinic."),
@@ -46,13 +50,16 @@ def main():
                 continue
             stamp = datetime.now(timezone.utc).isoformat()
             record = records.setdefault(hid, dict(hospital_id=hid, name=name, city=city, state=state,
-                                                 branch=name, ownership_type="public", source_url=url,
+                                                 branch=name, ownership_type="public" if hid.startswith("aiims-") else "unknown", source_url=url,
                                                  checked_at=stamp, website=url, evidence=[]))
             common = dict(subject=name, subject_id=hid, source_name=f"{name} official department page",
                           source_url=url, source_type="official_hospital_site", excerpt=summary,
                           retrieved_at=stamp, reliability="high", scope=specialty)
             record["evidence"].append(dict(claim_type="specialty", claim_value=specialty, **common))
             record["evidence"].extend(dict(claim_type="capability", claim_value=cap, **common) for cap in caps)
+            if hid == "cmc-ranipet":
+                record["address"] = "CMC Vellore Ranipet Campus, Kilminnal Village, Ranipet, Tamil Nadu"
+                record["postcode"] = "632517"
     path = Path("data/catalog/clinical_hospitals.json")
     if not records:
         raise RuntimeError(f"No pages verified; existing file preserved. {failures}")

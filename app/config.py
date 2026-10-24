@@ -32,6 +32,13 @@ def _env_float(name: str, default: float) -> float:
         return default
 
 
+def _sanitize_user_agent(ua: str) -> str:
+    cleaned = (ua or "").strip()
+    if not cleaned or "you@example.com" in cleaned or "example.com" in cleaned:
+        return "CareCompassAI/0.2 (+https://github.com/Mananfrfr/CareCompass_AI)"
+    return cleaned
+
+
 @dataclass(frozen=True)
 class RankingWeights:
     """Product weights for suitability ranking. Not clinically validated."""
@@ -72,8 +79,8 @@ class Settings:
     action_max_attempts: int = field(default_factory=lambda: _env_int("ACTION_MAX_ATTEMPTS", 3))
 
     http_user_agent: str = field(
-        default_factory=lambda: _env(
-            "HTTP_USER_AGENT", "CareCompassAI/0.1 (+https://github.com/; healthcare navigation research)"
+        default_factory=lambda: _sanitize_user_agent(
+            _env("HTTP_USER_AGENT", "CareCompassAI/0.2 (+https://github.com/Mananfrfr/CareCompass_AI)")
         )
     )
     live_max_candidates: int = field(default_factory=lambda: _env_int("LIVE_MAX_CANDIDATES", 40))

@@ -87,3 +87,47 @@ def test_official_catalog_contains_200_plus_real_identity_records_not_seed():
     assert all(r["current_sale_status"] == "unknown" for r in catalog.records)
     assert catalog.search("Health Companion")
     assert not catalog.search("invented imaginary product")
+
+
+def test_registry_uin_resolves_exact_product_without_coverage_claim():
+    catalog = PolicyCatalog()
+    row = catalog.records[0]
+    req = rule_extract("My policy UIN is " + row["uin"] + ". I need dialysis in Nagpur")
+    assert req.insurance_plan == row["name"] and req.insurance_provider
+
+
+def test_ambiguous_city_requires_state():
+    from app.intelligence.question_engine import plan_questions
+    req = rule_extract("dialysis in Bilaspur")
+    assert not plan_questions(req).ready and "state" in plan_questions(req).fields
+    req.state = "Himachal Pradesh"
+    assert plan_questions(req).ready
+
+
+def test_program_signposting_never_asserts_eligibility():
+    from app.research.assistance import programs, render_assistance
+    req = request(patient_age=72, state="Maharashtra")
+    ids = {r["id"] for r in programs(req)}
+    assert "pmjay-senior" in ids and "mjpjay" in ids and "jssk-infant" not in ids
+    assert "have not been verified" in render_assistance(req)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("text,facility", [
+    ("dialysis in Nagpur with no insurance", "aiims-nagpur"),
+    ("cataract surgery in Nagpur with no insurance", "aiims-nagpur"),
+    ("My 8 year old child has leukemia in Ranipet, no insurance", "cmc-ranipet"),
+])
+async def test_real_catalog_supported_conditions(text, facility):
+    from app.research.hospital_catalog import CatalogHospitalSource
+    from app.matching.evidence_engine import build_candidates
+    from app.matching.decision_rules import apply_candidate_rules
+    from app.matching.ranking import rank
+    from app.schemas.hospital import HospitalResearchQuery
+    req = rule_extract(text)
+    result = await CatalogHospitalSource().search_hospitals(HospitalResearchQuery(
+        case_id="test", task_id="test", city=req.city, specialty=req.care_specialty))
+    candidates = [apply_candidate_rules(c, req) for c in build_candidates(req, result, None)]
+    ranked = rank(candidates, req, RankingWeights())
+    assert any(c.hospital.hospital_id == facility for c in ranked)
+    assert all(not c.hospital.synthetic for c in ranked)

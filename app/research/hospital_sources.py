@@ -35,6 +35,10 @@ NAME_HINTS: dict[str, tuple[str, ...]] = {
     "paediatrics": ("child", "children", "kids", "paediatric", "pediatric"),
     "oncology": ("cancer", "onco"),
     "ent": ("ent ", "ear nose"),
+    "nephrology": ("nephro", "kidney", "dialysis", "renal"),
+    "gastroenterology": ("gastro", "digestive", "liver", "endoscopy"),
+    "pulmonology": ("chest", "pulmo", "respiratory", "lung"),
+    "endocrinology": ("diabet", "endocrin", "thyroid"),
     "dermatology": ("skin", "derma"),
     "neurology": ("neuro", "brain"),
 }
@@ -228,10 +232,32 @@ class OSMHospitalSource:
         excerpt = _specialty_from_text(text, specialty)
         if not excerpt:
             return []
-        return [Evidence(claim_type=ClaimType.SPECIALTY, claim_value=specialty, subject=record.name,
-                         subject_id=record.hospital_id, source_name="Hospital website", source_url=doc.final_url,
-                         source_type=SourceType.OFFICIAL_HOSPITAL_SITE, excerpt=excerpt[:300],
-                         retrieved_at=doc.retrieved_at, reliability=Reliability.HIGH)]
+        ev_list = [Evidence(claim_type=ClaimType.SPECIALTY, claim_value=specialty, subject=record.name,
+                            subject_id=record.hospital_id, source_name="Hospital website", source_url=doc.final_url,
+                            source_type=SourceType.OFFICIAL_HOSPITAL_SITE, excerpt=excerpt[:300],
+                            retrieved_at=doc.retrieved_at, reliability=Reliability.HIGH)]
+        low = text.lower()
+        # General outpatient consultation capability when specialty is advertised
+        if any(w in low for w in ("consult", "opd", "appointment", "outpatient", "doctor", "specialist")):
+            ev_list.append(Evidence(claim_type=ClaimType.CAPABILITY, claim_value="outpatient_consultation",
+                                    subject=record.name, subject_id=record.hospital_id, source_name="Hospital website",
+                                    source_url=doc.final_url, source_type=SourceType.OFFICIAL_HOSPITAL_SITE,
+                                    excerpt=excerpt[:250], retrieved_at=doc.retrieved_at, reliability=Reliability.HIGH,
+                                    scope=specialty))
+        # Condition/procedure specific capabilities
+        if specialty == "nephrology":
+            if any(w in low for w in ("dialysis", "haemodialysis", "hemodialysis", "dialysis unit")):
+                ev_list.append(Evidence(claim_type=ClaimType.CAPABILITY, claim_value="dialysis",
+                                        subject=record.name, subject_id=record.hospital_id, source_name="Hospital website",
+                                        source_url=doc.final_url, source_type=SourceType.OFFICIAL_HOSPITAL_SITE,
+                                        excerpt="Hospital website lists dialysis treatment capability.",
+                                        retrieved_at=doc.retrieved_at, reliability=Reliability.HIGH, scope=specialty))
+                ev_list.append(Evidence(claim_type=ClaimType.CAPABILITY, claim_value="nephrology_support",
+                                        subject=record.name, subject_id=record.hospital_id, source_name="Hospital website",
+                                        source_url=doc.final_url, source_type=SourceType.OFFICIAL_HOSPITAL_SITE,
+                                        excerpt="Hospital website confirms nephrology department care.",
+                                        retrieved_at=doc.retrieved_at, reliability=Reliability.HIGH, scope=specialty))
+        return ev_list
 
 
 def build_hospital_source(fixture_mode: bool, fetcher: SafeFetcher | None = None,

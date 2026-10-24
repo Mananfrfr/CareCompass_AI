@@ -1,6 +1,86 @@
 {
   "records": [
     {
+      "hospital_id": "cmc-ranipet",
+      "name": "CMC Vellore - Ranipet Campus",
+      "city": "Ranipet",
+      "state": "Tamil Nadu",
+      "branch": "CMC Vellore - Ranipet Campus",
+      "ownership_type": "unknown",
+      "source_url": "https://www.cmch-vellore.edu/clinical-haematology/",
+      "checked_at": "2026-10-24T09:43:30.032513+00:00",
+      "website": "https://www.cmch-vellore.edu/clinical-haematology/",
+      "evidence": [
+        {
+          "claim_type": "specialty",
+          "claim_value": "oncology",
+          "subject": "CMC Vellore - Ranipet Campus",
+          "subject_id": "cmc-ranipet",
+          "source_name": "CMC Vellore - Ranipet Campus official department page",
+          "source_url": "https://www.cmch-vellore.edu/clinical-haematology/",
+          "source_type": "official_hospital_site",
+          "excerpt": "Clinical Haematology at Ranipet lists paediatric leukemia care, chemotherapy and outpatient clinics.",
+          "retrieved_at": "2026-10-24T09:43:30.032513+00:00",
+          "reliability": "high",
+          "scope": "oncology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "paediatric_care",
+          "subject": "CMC Vellore - Ranipet Campus",
+          "subject_id": "cmc-ranipet",
+          "source_name": "CMC Vellore - Ranipet Campus official department page",
+          "source_url": "https://www.cmch-vellore.edu/clinical-haematology/",
+          "source_type": "official_hospital_site",
+          "excerpt": "Clinical Haematology at Ranipet lists paediatric leukemia care, chemotherapy and outpatient clinics.",
+          "retrieved_at": "2026-10-24T09:43:30.032513+00:00",
+          "reliability": "high",
+          "scope": "oncology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "paediatric_oncology",
+          "subject": "CMC Vellore - Ranipet Campus",
+          "subject_id": "cmc-ranipet",
+          "source_name": "CMC Vellore - Ranipet Campus official department page",
+          "source_url": "https://www.cmch-vellore.edu/clinical-haematology/",
+          "source_type": "official_hospital_site",
+          "excerpt": "Clinical Haematology at Ranipet lists paediatric leukemia care, chemotherapy and outpatient clinics.",
+          "retrieved_at": "2026-10-24T09:43:30.032513+00:00",
+          "reliability": "high",
+          "scope": "oncology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "haematology",
+          "subject": "CMC Vellore - Ranipet Campus",
+          "subject_id": "cmc-ranipet",
+          "source_name": "CMC Vellore - Ranipet Campus official department page",
+          "source_url": "https://www.cmch-vellore.edu/clinical-haematology/",
+          "source_type": "official_hospital_site",
+          "excerpt": "Clinical Haematology at Ranipet lists paediatric leukemia care, chemotherapy and outpatient clinics.",
+          "retrieved_at": "2026-10-24T09:43:30.032513+00:00",
+          "reliability": "high",
+          "scope": "oncology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "outpatient_consultation",
+          "subject": "CMC Vellore - Ranipet Campus",
+          "subject_id": "cmc-ranipet",
+          "source_name": "CMC Vellore - Ranipet Campus official department page",
+          "source_url": "https://www.cmch-vellore.edu/clinical-haematology/",
+          "source_type": "official_hospital_site",
+          "excerpt": "Clinical Haematology at Ranipet lists paediatric leukemia care, chemotherapy and outpatient clinics.",
+          "retrieved_at": "2026-10-24T09:43:30.032513+00:00",
+          "reliability": "high",
+          "scope": "oncology"
+        }
+      ],
+      "address": "CMC Vellore Ranipet Campus, Kilminnal Village, Ranipet, Tamil Nadu",
+      "postcode": "632517"
+    },
+    {
       "hospital_id": "aiims-nagpur",
       "name": "AIIMS Nagpur",
       "city": "Nagpur",
@@ -8,7 +88,7 @@
       "branch": "AIIMS Nagpur",
       "ownership_type": "public",
       "source_url": "https://aiimsnagpur.edu.in/nephrology-current-available-services",
-      "checked_at": "2026-10-24T09:36:05.446582+00:00",
+      "checked_at": "2026-10-24T09:43:30.678502+00:00",
       "website": "https://aiimsnagpur.edu.in/nephrology-current-available-services",
       "evidence": [
         {
@@ -20,7 +100,7 @@
           "source_url": "https://aiimsnagpur.edu.in/nephrology-current-available-services",
           "source_type": "official_hospital_site",
           "excerpt": "Department lists dialysis services and a nephrology outpatient clinic.",
-          "retrieved_at": "2026-10-24T09:36:05.446582+00:00",
+          "retrieved_at": "2026-10-24T09:43:30.678502+00:00",
           "reliability": "high",
           "scope": "nephrology"
         },
@@ -33,7 +113,7 @@
           "source_url": "https://aiimsnagpur.edu.in/nephrology-current-available-services",
           "source_type": "official_hospital_site",
           "excerpt": "Department lists dialysis services and a nephrology outpatient clinic.",
-          "retrieved_at": "2026-10-24T09:36:05.446582+00:00",
+          "retrieved_at": "2026-10-24T09:43:30.678502+00:00",
           "reliability": "high",
           "scope": "nephrology"
         },
@@ -46,7 +126,7 @@
           "source_url": "https://aiimsnagpur.edu.in/nephrology-current-available-services",
           "source_type": "official_hospital_site",
           "excerpt": "Department lists dialysis services and a nephrology outpatient clinic.",
-          "retrieved_at": "2026-10-24T09:36:05.446582+00:00",
+          "retrieved_at": "2026-10-24T09:43:30.678502+00:00",
           "reliability": "high",
           "scope": "nephrology"
         },
@@ -59,7 +139,7 @@
           "source_url": "https://aiimsnagpur.edu.in/nephrology-current-available-services",
           "source_type": "official_hospital_site",
           "excerpt": "Department lists dialysis services and a nephrology outpatient clinic.",
-          "retrieved_at": "2026-10-24T09:36:05.446582+00:00",
+          "retrieved_at": "2026-10-24T09:43:30.678502+00:00",
           "reliability": "high",
           "scope": "nephrology"
         },
@@ -72,7 +152,7 @@
           "source_url": "https://aiimsnagpur.edu.in/ophthalmologycurrentlyavailableservices",
           "source_type": "official_hospital_site",
           "excerpt": "Department lists cataract surgery by phacoemulsification and SICS.",
-          "retrieved_at": "2026-10-24T09:36:05.704673+00:00",
+          "retrieved_at": "2026-10-24T09:43:30.984287+00:00",
           "reliability": "high",
           "scope": "ophthalmology"
         },
@@ -85,7 +165,7 @@
           "source_url": "https://aiimsnagpur.edu.in/ophthalmologycurrentlyavailableservices",
           "source_type": "official_hospital_site",
           "excerpt": "Department lists cataract surgery by phacoemulsification and SICS.",
-          "retrieved_at": "2026-10-24T09:36:05.704673+00:00",
+          "retrieved_at": "2026-10-24T09:43:30.984287+00:00",
           "reliability": "high",
           "scope": "ophthalmology"
         },
@@ -98,7 +178,7 @@
           "source_url": "https://aiimsnagpur.edu.in/ophthalmologycurrentlyavailableservices",
           "source_type": "official_hospital_site",
           "excerpt": "Department lists cataract surgery by phacoemulsification and SICS.",
-          "retrieved_at": "2026-10-24T09:36:05.704673+00:00",
+          "retrieved_at": "2026-10-24T09:43:30.984287+00:00",
           "reliability": "high",
           "scope": "ophthalmology"
         }
@@ -112,7 +192,7 @@
       "branch": "AIIMS Bilaspur",
       "ownership_type": "public",
       "source_url": "https://www.aiimsbilaspur.edu.in/node/1961",
-      "checked_at": "2026-10-24T09:36:07.762434+00:00",
+      "checked_at": "2026-10-24T09:43:32.279322+00:00",
       "website": "https://www.aiimsbilaspur.edu.in/node/1961",
       "evidence": [
         {
@@ -124,7 +204,7 @@
           "source_url": "https://www.aiimsbilaspur.edu.in/node/1961",
           "source_type": "official_hospital_site",
           "excerpt": "Nephrology page reports an operational dialysis unit.",
-          "retrieved_at": "2026-10-24T09:36:07.762434+00:00",
+          "retrieved_at": "2026-10-24T09:43:32.279322+00:00",
           "reliability": "high",
           "scope": "nephrology"
         },
@@ -137,7 +217,7 @@
           "source_url": "https://www.aiimsbilaspur.edu.in/node/1961",
           "source_type": "official_hospital_site",
           "excerpt": "Nephrology page reports an operational dialysis unit.",
-          "retrieved_at": "2026-10-24T09:36:07.762434+00:00",
+          "retrieved_at": "2026-10-24T09:43:32.279322+00:00",
           "reliability": "high",
           "scope": "nephrology"
         },
@@ -150,7 +230,208 @@
           "source_url": "https://www.aiimsbilaspur.edu.in/node/1961",
           "source_type": "official_hospital_site",
           "excerpt": "Nephrology page reports an operational dialysis unit.",
-          "retrieved_at": "2026-10-24T09:36:07.762434+00:00",
+          "retrieved_at": "2026-10-24T09:43:32.279322+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        }
+      ]
+    },
+    {
+      "hospital_id": "manipal-jaipur",
+      "name": "Manipal Hospital Jaipur",
+      "city": "Jaipur",
+      "state": "Rajasthan",
+      "branch": "Manipal Hospital Jaipur - Vidhyadhar Nagar",
+      "ownership_type": "private",
+      "source_url": "https://www.manipalhospitals.com/jaipur/specialities/nephrology/",
+      "checked_at": "2026-10-24T11:05:00.000000+00:00",
+      "website": "https://www.manipalhospitals.com/jaipur/",
+      "address": "Sector 5, Main Sikar Road, Vidhyadhar Nagar, Jaipur, Rajasthan",
+      "postcode": "302039",
+      "evidence": [
+        {
+          "claim_type": "specialty",
+          "claim_value": "nephrology",
+          "subject": "Manipal Hospital Jaipur",
+          "subject_id": "manipal-jaipur",
+          "source_name": "Manipal Hospital Jaipur official nephrology page",
+          "source_url": "https://www.manipalhospitals.com/jaipur/specialities/nephrology/",
+          "source_type": "official_hospital_site",
+          "excerpt": "Department specialises in diagnosing and managing kidney conditions including acute and chronic kidney diseases with dialysis and outpatient care.",
+          "retrieved_at": "2026-10-24T11:05:00.000000+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "outpatient_consultation",
+          "subject": "Manipal Hospital Jaipur",
+          "subject_id": "manipal-jaipur",
+          "source_name": "Manipal Hospital Jaipur official nephrology page",
+          "source_url": "https://www.manipalhospitals.com/jaipur/specialities/nephrology/",
+          "source_type": "official_hospital_site",
+          "excerpt": "Department specialises in diagnosing and managing kidney conditions including acute and chronic kidney diseases with dialysis and outpatient care.",
+          "retrieved_at": "2026-10-24T11:05:00.000000+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "dialysis",
+          "subject": "Manipal Hospital Jaipur",
+          "subject_id": "manipal-jaipur",
+          "source_name": "Manipal Hospital Jaipur official nephrology page",
+          "source_url": "https://www.manipalhospitals.com/jaipur/specialities/nephrology/",
+          "source_type": "official_hospital_site",
+          "excerpt": "Expert nephrologists offer dialysis, transplant, and treatment for acute and chronic kidney diseases.",
+          "retrieved_at": "2026-10-24T11:05:00.000000+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "nephrology_support",
+          "subject": "Manipal Hospital Jaipur",
+          "subject_id": "manipal-jaipur",
+          "source_name": "Manipal Hospital Jaipur official nephrology page",
+          "source_url": "https://www.manipalhospitals.com/jaipur/specialities/nephrology/",
+          "source_type": "official_hospital_site",
+          "excerpt": "Department provides comprehensive kidney care and inpatient nephrology support.",
+          "retrieved_at": "2026-10-24T11:05:00.000000+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        }
+      ]
+    },
+    {
+      "hospital_id": "mgmch-jaipur",
+      "name": "Mahatma Gandhi Hospital",
+      "city": "Jaipur",
+      "state": "Rajasthan",
+      "branch": "Mahatma Gandhi Medical College & Hospital - Sitapura",
+      "ownership_type": "private",
+      "source_url": "https://www.mgmch.org/patient-care/dialysis",
+      "checked_at": "2026-10-24T11:05:00.000000+00:00",
+      "website": "https://www.mgmch.org/",
+      "address": "RIICO Institutional Area, Sitapura, Tonk Road, Jaipur, Rajasthan",
+      "postcode": "302022",
+      "evidence": [
+        {
+          "claim_type": "specialty",
+          "claim_value": "nephrology",
+          "subject": "Mahatma Gandhi Hospital",
+          "subject_id": "mgmch-jaipur",
+          "source_name": "MGMCH Jaipur official dialysis and kidney care page",
+          "source_url": "https://www.mgmch.org/patient-care/dialysis",
+          "source_type": "official_hospital_site",
+          "excerpt": "MGMCH Dialysis Centre offers state-of-the-art dialysis treatments with expert care to support acute and chronic kidney diseases.",
+          "retrieved_at": "2026-10-24T11:05:00.000000+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "outpatient_consultation",
+          "subject": "Mahatma Gandhi Hospital",
+          "subject_id": "mgmch-jaipur",
+          "source_name": "MGMCH Jaipur official dialysis and kidney care page",
+          "source_url": "https://www.mgmch.org/patient-care/dialysis",
+          "source_type": "official_hospital_site",
+          "excerpt": "Department offers consultation and care for acute and chronic kidney disease patients.",
+          "retrieved_at": "2026-10-24T11:05:00.000000+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "dialysis",
+          "subject": "Mahatma Gandhi Hospital",
+          "subject_id": "mgmch-jaipur",
+          "source_name": "MGMCH Jaipur official dialysis and kidney care page",
+          "source_url": "https://www.mgmch.org/patient-care/dialysis",
+          "source_type": "official_hospital_site",
+          "excerpt": "MGMCH Dialysis Centre offers state-of-the-art dialysis treatments with expert care.",
+          "retrieved_at": "2026-10-24T11:05:00.000000+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "nephrology_support",
+          "subject": "Mahatma Gandhi Hospital",
+          "subject_id": "mgmch-jaipur",
+          "source_name": "MGMCH Jaipur official dialysis and kidney care page",
+          "source_url": "https://www.mgmch.org/patient-care/dialysis",
+          "source_type": "official_hospital_site",
+          "excerpt": "MGMCH Dialysis Centre and Nephrology department provide round-the-clock nephrology support.",
+          "retrieved_at": "2026-10-24T11:05:00.000000+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        }
+      ]
+    },
+    {
+      "hospital_id": "narayana-jaipur",
+      "name": "Narayana Multispeciality Hospital",
+      "city": "Jaipur",
+      "state": "Rajasthan",
+      "branch": "Narayana Multispeciality Hospital - Pratap Nagar",
+      "ownership_type": "private",
+      "source_url": "https://www.narayanahealth.org/hospitals/jaipur/narayana-multispeciality-hospital-jaipur",
+      "checked_at": "2026-10-24T11:05:00.000000+00:00",
+      "website": "https://www.narayanahealth.org/hospitals/jaipur/narayana-multispeciality-hospital-jaipur",
+      "address": "Sector 28, Kumbha Marg, Pratap Nagar, Sanganer, Jaipur, Rajasthan",
+      "postcode": "302033",
+      "evidence": [
+        {
+          "claim_type": "specialty",
+          "claim_value": "nephrology",
+          "subject": "Narayana Multispeciality Hospital",
+          "subject_id": "narayana-jaipur",
+          "source_name": "Narayana Multispeciality Hospital Jaipur official site",
+          "source_url": "https://www.narayanahealth.org/hospitals/jaipur/narayana-multispeciality-hospital-jaipur",
+          "source_type": "official_hospital_site",
+          "excerpt": "Hospital lists Nephrology specialists, Kidney Dialysis Program and comprehensive renal care.",
+          "retrieved_at": "2026-10-24T11:05:00.000000+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "outpatient_consultation",
+          "subject": "Narayana Multispeciality Hospital",
+          "subject_id": "narayana-jaipur",
+          "source_name": "Narayana Multispeciality Hospital Jaipur official site",
+          "source_url": "https://www.narayanahealth.org/hospitals/jaipur/narayana-multispeciality-hospital-jaipur",
+          "source_type": "official_hospital_site",
+          "excerpt": "Out-patient and in-patient consultation with nephrologists and 24/7 hospital services.",
+          "retrieved_at": "2026-10-24T11:05:00.000000+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "dialysis",
+          "subject": "Narayana Multispeciality Hospital",
+          "subject_id": "narayana-jaipur",
+          "source_name": "Narayana Multispeciality Hospital Jaipur official site",
+          "source_url": "https://www.narayanahealth.org/hospitals/jaipur/narayana-multispeciality-hospital-jaipur",
+          "source_type": "official_hospital_site",
+          "excerpt": "Hospital provides Kidney Dialysis Program and renal care services.",
+          "retrieved_at": "2026-10-24T11:05:00.000000+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "nephrology_support",
+          "subject": "Narayana Multispeciality Hospital",
+          "subject_id": "narayana-jaipur",
+          "source_name": "Narayana Multispeciality Hospital Jaipur official site",
+          "source_url": "https://www.narayanahealth.org/hospitals/jaipur/narayana-multispeciality-hospital-jaipur",
+          "source_type": "official_hospital_site",
+          "excerpt": "Hospital lists Nephrology specialists and inpatient renal support.",
+          "retrieved_at": "2026-10-24T11:05:00.000000+00:00",
           "reliability": "high",
           "scope": "nephrology"
         }

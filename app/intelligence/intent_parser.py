@@ -78,8 +78,15 @@ def rule_extract(text: str, report_text: str | None = None) -> CareRequest:
                 req.source_references.append(SourceReference(origin="user_message", text=m.group(0), start=m.start(), end=m.end()))
                 break
     req.insurance_provider = kb.find_insurer(text)
+    from app.research.policy_catalog import PolicyCatalog
+    identity = PolicyCatalog().identify(text)
+    if identity:
+        registered_provider = kb.find_insurer(identity["provider"]) or identity["provider"]
+        if not req.insurance_provider or req.insurance_provider == registered_provider:
+            req.insurance_provider = registered_provider
+            req.insurance_plan = identity["name"]
     req.insurance_declined = req.insurance_provider is None and kb.declines_insurance(text)
-    if (m := PLAN.search(text)) and req.insurance_provider:
+    if not req.insurance_plan and (m := PLAN.search(text)) and req.insurance_provider:
         req.insurance_plan = m.group(1).strip()
     req.allow_nearby = bool(NEARBY.search(text))
     low = text.lower()

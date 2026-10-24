@@ -181,6 +181,12 @@ CITY_ALIASES: dict[str, str] = {
 }
 
 INSURER_ALIASES: dict[str, str] = {
+    "acko": "ACKO", "navi insurance": "Navi", "zuno": "Zuno", "edelweiss general": "Zuno",
+    "chola ms": "Cholamandalam MS", "cholamandalam": "Cholamandalam MS",
+    "royal sundaram": "Royal Sundaram", "shriram general": "Shriram General",
+    "raheja qbe": "Raheja QBE", "liberty general": "Liberty General",
+    "future generali": "Future Generali", "iffco tokio": "IFFCO Tokio",
+    "universal sompo": "Universal Sompo", "go digit": "Go Digit",
     "star health": "Star Health", "hdfc ergo": "HDFC ERGO", "icici lombard": "ICICI Lombard",
     "niva bupa": "Niva Bupa", "max bupa": "Niva Bupa", "care health": "Care Health", "religare": "Care Health",
     "bajaj allianz": "Bajaj Allianz", "tata aig": "Tata AIG", "aditya birla": "Aditya Birla Health",

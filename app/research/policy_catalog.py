@@ -11,6 +11,17 @@ class PolicyCatalog:
         path = path or DATA_DIR / "catalog" / "insurance_products.json"
         self.records = json.loads(path.read_text(encoding="utf-8"))["records"] if path.exists() else []
 
+    def identify(self, text: str) -> dict | None:
+        """Exact UIN or unambiguous full product name only; never choose a plan by similarity."""
+        low = text.casefold()
+        hits = [r for r in self.records if re.search(rf"\b{re.escape(r['uin'].casefold())}\b", low)]
+        if len(hits) == 1:
+            return hits[0]
+        hits = [r for r in self.records if len(r["name"]) >= 10 and len(r["name"].split()) >= 2
+                and re.search(rf"\b{re.escape(r['name'].casefold())}\b", low)]
+        identities = {(r["provider"].casefold(), r["name"].casefold()) for r in hits}
+        return hits[0] if len(identities) == 1 else None
+
     def search(self, query: str, limit: int = 8) -> list[dict]:
         terms = re.findall(r"[a-z0-9]+", query.casefold())
         if not terms:

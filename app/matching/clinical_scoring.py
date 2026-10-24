@@ -28,6 +28,12 @@ def score_candidate(c: RankedCandidate, req: CareRequest, weights: RankingWeight
     c.contextual_tier = None
     c.suitability_score = 0
     c.score_breakdown = {}
+    if req.state and c.hospital.state and req.state.casefold() != c.hospital.state.casefold():
+        c.rule_flags.append("State mismatch; a matching city name is insufficient")
+        return False
+    if c.hospital.city.casefold() == "bilaspur" and not req.state:
+        c.rule_flags.append("Bilaspur is ambiguous: specify the state")
+        return False
     # Branch-bound current evidence only. Fixture evidence cannot qualify a real hospital.
     ev = [e for e in c.evidence if e.subject_id == c.hospital.hospital_id and e.is_authoritative
           and current(e, now) and (c.hospital.synthetic or e.source_type != SourceType.SYNTHETIC_FIXTURE)]

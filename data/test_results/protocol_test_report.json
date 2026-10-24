@@ -1,91 +1,62 @@
 {
-  "started": "2026-10-24T08:38:23.970982+00:00",
-  "coordinator": "agent1qfjtlm2r78u6zz2h3v3y8rqvhz529a4gr3euqq8pte0x5zqg8sm5sxgg22x",
+  "started": "2026-10-24T11:08:31.532926+00:00",
+  "coordinator": "agent1qfgyu23n92l5s6wlm6hlrc6lpjntnduycndzw922m0ryq2wwj7hkyljlsdw",
   "steps": [
     {
       "step": "request",
-      "text_preview": "**Concern:** ACL tear \u2192 looking for **Orthopaedics** services\n_ACL injuries are usually evaluated by orthopaedic / sports-medicine services._\n**City:** Jaipur\n**Insurer:** Demo Shield Insurance\n\n**Demo data notice:** these hospitals and insurer records are *synthetic (fictional)* and are used to dem",
-      "card_kind": "carousel",
-      "card_valid": true,
-      "card_items": 3
+      "text_preview": "Sorry - something went wrong on my side and nothing was saved. Please try again, or say **new search**.",
+      "card_kind": null
     },
     {
       "step": "select",
-      "text_preview": "**Aravali Bone & Joint Hospital**\n- Address: 12 Synthetic Marg, Malviya Nagar, Jaipur\n- Why ranked: Ranked here because orthopaedics services are advertised on its own profile; it is in Jaipur; it appears in Demo Shield Insurance's network list (a listing alone does not confirm your claim).\n- Insura",
-      "card_kind": "detail",
-      "card_valid": true,
-      "card_items": null
+      "text_preview": "I'm still working on your previous request - one moment.",
+      "card_kind": null
     },
     {
       "step": "review",
-      "text_preview": "**Please confirm:** save this shortlist (1. Aravali Bone & Joint Hospital; 2. Pink City Multispeciality Hospital; 3. Amber Sports Injury Centre) with **Aravali Bone & Joint Hospital** as your choice and its supporting evidence to your CareCompass record?\nNo report text is stored, and nothing is sent",
-      "card_kind": "review",
-      "card_valid": true,
-      "card_items": null
+      "text_preview": "I'm still working on your previous request - one moment.",
+      "card_kind": null
     },
     {
       "step": "approve",
-      "text_preview": "\u2705 Saved and verified. Your reference is **CC-2AVE4HT5**.\n\n**Verification**\n- record read back\n- payload hash matches approval\n- 16 evidence records present\n\n**Saved shortlist**\n- 1. Aravali Bone & Joint Hospital - NETWORK_VERIFIED, CASHLESS_LISTED, PLAN_DETAILS_REQUIRED \u2190 your choice\n- 2. Pink City ",
+      "text_preview": "I'm still working on your previous request - one moment.",
       "card_kind": null,
-      "confirmation_id": "CC-2AVE4HT5"
+      "confirmation_id": null
     },
     {
       "step": "approve_again",
-      "text_preview": "This shortlist was already saved - no duplicate was created. Reference: **CC-2AVE4HT5**\n\n**Verification**\n- already completed earlier\n\n**Saved shortlist**\n- 1. Aravali Bone & Joint Hospital - NETWORK_VERIFIED, CASHLESS_LISTED, PLAN_DETAILS_REQUIRED \u2190 your choice\n- 2. Pink City Multispeciality Hospit",
+      "text_preview": "I'm still working on your previous request - one moment.",
       "card_kind": null,
-      "confirmation_id": "CC-2AVE4HT5"
+      "confirmation_id": null
     }
   ],
   "checks": {
     "every_message_acknowledged": true,
-    "shortlist_carousel_card": true,
-    "detail_card_on_selection": true,
-    "review_card_before_action": true,
-    "confirmation_issued_after_approval": true,
-    "duplicate_approval_same_id": true,
-    "hospital_agent_received_task": true,
-    "insurer_agent_received_task": true,
-    "exactly_one_shortlist_persisted": true,
-    "confirmation_id_matches_db_record": true,
-    "both_research_agents_succeeded": true,
-    "action_verified_in_db": true
+    "shortlist_carousel_card": false,
+    "detail_card_on_selection": false,
+    "review_card_before_action": false,
+    "confirmation_issued_after_approval": false,
+    "duplicate_approval_same_id": false,
+    "hospital_agent_received_task": false,
+    "insurer_agent_received_task": false,
+    "exactly_one_shortlist_persisted": false,
+    "confirmation_id_matches_db_record": false,
+    "both_research_agents_succeeded": false,
+    "action_verified_in_db": false
   },
   "latencies": {
-    "request": 0.16,
-    "select": 0.05,
-    "review": 0.05,
-    "approve": 0.07,
-    "approve_again": 0.05
+    "request": 0.2,
+    "select": 0.03,
+    "review": 0.03,
+    "approve": 0.03,
+    "approve_again": 0.03
   },
   "acks_received": 6,
   "messages_sent": 6,
-  "confirmation_id": "CC-2AVE4HT5",
+  "confirmation_id": null,
   "db": {
-    "shortlists": [
-      [
-        "CC-2AVE4HT5",
-        "case_cad83299fa954939"
-      ]
-    ],
-    "agent_tasks": [
-      [
-        "hospital-agent",
-        "succeeded",
-        1,
-        24
-      ],
-      [
-        "insurer-agent",
-        "succeeded",
-        1,
-        28
-      ]
-    ],
-    "action_executions": [
-      [
-        "succeeded",
-        1
-      ]
-    ]
+    "shortlists": [],
+    "agent_tasks": [],
+    "action_executions": []
   }
 }

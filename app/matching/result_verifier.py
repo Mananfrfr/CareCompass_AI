@@ -28,6 +28,7 @@ FORBIDDEN_CLAIMS = re.compile(
 class VerificationReport:
     passed: list[RankedCandidate] = field(default_factory=list)
     rejected: list[tuple[str, str]] = field(default_factory=list)
+    leads: list[RankedCandidate] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
 
     @property
@@ -120,6 +121,11 @@ def verify(candidates: list[RankedCandidate], req: CareRequest, known_evidence_i
         from app.config import RankingWeights
         if not score_candidate(c, req, RankingWeights()):
             report.rejected.append((name, "clinical capability gate or minimum evidence score failed"))
+            # Retain as an unverified directory lead if not duplicate
+            if c.hospital.hospital_id not in seen_ids and identity not in seen_identity:
+                seen_ids.add(c.hospital.hospital_id)
+                seen_identity.add(identity)
+                report.leads.append(c)
             continue
 
         c.verification_status = VerificationStatus.DOWNGRADED if downgraded else VerificationStatus.PASSED

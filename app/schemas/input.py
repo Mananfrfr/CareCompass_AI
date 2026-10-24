@@ -59,6 +59,7 @@ class CareRequest(BaseModel):
     budget_unit: str | None = None  # session | procedure | consultation; never silently interchanged
     required_capabilities: list[str] = Field(default_factory=list)
     city: str | None = None
+    state: str | None = None
     allow_nearby: bool = False
     insurance_provider: str | None = None
     insurance_declined: bool = False
@@ -73,12 +74,31 @@ class CareRequest(BaseModel):
     unreadable_notes: list[str] = Field(default_factory=list)
 
     def merged_with(self, update: "CareRequest") -> "CareRequest":
-        """Fill gaps from a follow-up message without discarding earlier facts."""
+        """Fill gaps from a follow-up message without discarding earlier facts, resetting stale clinical state when concern changes."""
         data = self.model_dump()
+
+        # Check if the update indicates a new or changed clinical topic / city
+        new_specialty = update.care_specialty and update.care_specialty != self.care_specialty
+        new_condition = update.reported_condition and update.reported_condition != self.reported_condition
+        new_city = update.city and self.city and update.city.casefold() != self.city.casefold()
+
+        if new_specialty or new_condition or new_city:
+            # Clear previously specific procedures, capabilities, budget and ungrounded constraints
+            for field in [
+                "related_procedure", "budget_inr", "budget_unit",
+                "patient_age", "state"
+            ]:
+                data[field] = getattr(update, field)
+            data["required_capabilities"] = list(update.required_capabilities)
+            data["preferences"] = list(update.preferences)
+            data["allow_nearby"] = update.allow_nearby
+
         for key, value in update.model_dump().items():
             if key in {"case_id"}:
                 continue
-            if isinstance(value, list):
+            if key in {"required_capabilities", "preferences"} and (new_specialty or new_condition or new_city):
+                data[key] = list(value)
+            elif isinstance(value, list):
                 existing = data.get(key) or []
                 data[key] = existing + [v for v in value if v not in existing]
             elif value not in (None, "", False, 0.0, InputType.UNKNOWN, Urgency.UNKNOWN):

@@ -24,6 +24,9 @@ def requirements(req: CareRequest) -> list[str]:
 
 
 def extract_requirements(req: CareRequest, text: str) -> None:
+    for state in ("Himachal Pradesh", "Chhattisgarh", "Maharashtra", "Bihar", "Rajasthan", "Delhi"):
+        if re.search(rf"\b{re.escape(state)}\b", text, re.I):
+            req.state = state
     age = re.search(r"\b(\d{1,3})\s*(?:year[s]?[- ]old|yr[s]?[- ]old|years of age)\b", text, re.I)
     if age and int(age[1]) <= 120:
         req.patient_age = int(age[1])
@@ -36,7 +39,7 @@ def extract_requirements(req: CareRequest, text: str) -> None:
             unit = re.search(r"\b(?:per|each|a)\s+(session|procedure|consultation)\b", text, re.I)
             req.budget_unit = unit[1].lower() if unit else None
     # Do not infer dialysis merely from chronic kidney disease.
-    if re.search(r"\b(?:ha?emodialysis|dialysis)\b", text, re.I):
+    if re.search(r"\b(?:ha?emodialysis|dialysis)\b", text, re.I) and not re.search(r"\b(?:no|not|without|don't need|do not need)\s+(?:\w+\s+){0,2}dialysis\b", text, re.I):
         req.related_procedure = "dialysis"
         req.required_capabilities = ["dialysis", "nephrology_support"]
     if re.search(r"\bleuk[ae]mia\b", text, re.I):

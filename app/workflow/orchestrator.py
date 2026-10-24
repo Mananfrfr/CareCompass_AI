@@ -100,6 +100,11 @@ class CareCompassWorkflow:
             from app.research.policy_catalog import PolicyCatalog
             return [Reply(PolicyCatalog().render(text[14:].strip()))]
 
+        if text.lower() in {"financial help", "government schemes", "assistance programs"}:
+            from app.research.assistance import render_assistance
+            case = self.repo.active_case(session_key)
+            return [Reply(render_assistance(self._request(case) if case else None))]
+
         if HELP.match(text):
             return [Reply(HELP_TEXT)]
         if DELETE.search(text):
@@ -209,7 +214,7 @@ class CareCompassWorkflow:
         self._move(case, CaseState.RESEARCHING, trace)
         h_query = HospitalResearchQuery(case_id=case.case_id, task_id="task_" + uuid.uuid4().hex[:12], city=req.city or "",
                                         specialty=req.care_specialty or "", procedure=req.related_procedure,
-                                        allow_nearby=req.allow_nearby)
+                                        allow_nearby=req.allow_nearby, max_results=24)
         jobs = [research.hospitals(h_query)]
         i_query = None
         if req.insurance_provider:
@@ -254,6 +259,8 @@ class CareCompassWorkflow:
                         rejected=report.rejected, notes=report.notes)
 
         source_notes = self._source_notes(h_out.result, insurer_result, req)
+        if req.insurance_declined or req.budget_inr or "low cost" in req.preferences:
+            source_notes.append("For official government and financial-assistance avenues, ask **financial help**. Eligibility and package acceptance are checked separately from hospital ranking.")
         if insurer_result is not None and insurer_result.plan_required:
             asked = json.loads(case.asked_json or "{}")
             asked["plan"] = asked.get("plan", 0) + 1
@@ -270,12 +277,23 @@ class CareCompassWorkflow:
                    shown=len(final), version=case.shortlist_version)
 
         if not final:
-            return [Reply("\n\n".join(prefix + [
+            lines = [
                 tf.understanding_summary(req),
                 f"I couldn't find any hospital in {req.city} with reliable evidence for "
-                f"{(req.care_specialty or '').replace('_', ' ')} services, so I won't invent options.",
-                "You could try a nearby larger city (e.g. *\"also consider nearby cities\"*) or another city.",
-            ] + [f"_{n}_" for n in source_notes]))]
+                f"{(req.care_specialty or '').replace('_', ' ')} and the required treatment capabilities. "
+                f"{len(h_out.result.hospitals)} directory candidates were considered; missing clinical evidence cannot qualify them, so I won't invent options.",
+            ]
+            if report.leads:
+                signal_order = {"verified": 0, "directory": 1, "weak": 2, "none": 3}
+                leads_sorted = sorted(report.leads, key=lambda l: signal_order.get(l.specialty_signal, 4))[:5]
+                lead_lines = ["\n**Hospitals to call and confirm directly (directory leads, not clinical recommendations):**"]
+                for lead in leads_sorted:
+                    flags = "; ".join(lead.rule_flags) if lead.rule_flags else "needs clinical verification"
+                    addr = f" - {lead.hospital.address}" if lead.hospital.address else ""
+                    lead_lines.append(f"- **{lead.hospital.name}** ({lead.hospital.city}){addr}\n  _Status: {flags}_")
+                lines.append("\n".join(lead_lines))
+            lines.append("You could try a nearby larger city (e.g. *\"also consider nearby cities\"*) or another city.")
+            return [Reply("\n\n".join(prefix + lines + [f"_{n}_" for n in source_notes]))]
 
         narrative, method = await explainer.summarize(self.asi1, req, final)
         self.repo.audit(case.case_id, trace, "summary", method=method)
@@ -296,6 +314,8 @@ class CareCompassWorkflow:
                 reason = i_result.source_status[0].error if i_result.source_status else "unavailable"
                 notes.append(f"{req.insurance_provider} network status was NOT checked: {reason} "
                              "This is not an out-of-network result.")
+                if "ayushman" in (req.insurance_provider or "").lower() or "pm-jay" in (req.insurance_provider or "").lower():
+                    notes.append("Ayushman Bharat PM-JAY next steps: Check official empanelled hospitals at https://hospitals.pmjay.gov.in or call toll-free helpline 14555. In Rajasthan, also visit the PM-JAY / Mukhyamantri Ayushman Arogya (MAA) helpdesk at any major government or empanelled hospital.")
             elif i_result.plan_required:
                 plans = ", ".join(i_result.known_plans)
                 if req.insurance_plan:

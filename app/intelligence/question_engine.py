@@ -19,6 +19,8 @@ class QuestionPlan:
 def plan_questions(req: CareRequest, asked_counts: dict[str, int] | None = None) -> QuestionPlan:
     asked_counts = asked_counts or {}
     missing = [f for f in REQUIRED_FOR_RESEARCH if not getattr(req, f)]
+    if (req.city or "").casefold() == "bilaspur" and not req.state:
+        missing.append("state")
     if not missing:
         return QuestionPlan(ready=True)
 
@@ -33,6 +35,8 @@ def plan_questions(req: CareRequest, asked_counts: dict[str, int] | None = None)
                          "in a few words, or paste the *Impression* / *Diagnosis* line from your report?")
     if "city" in missing:
         lines.append("Which **city** should I search in?")
+    if "state" in missing:
+        lines.append("Which **state** is your Bilaspur in? This prevents matching a hospital in the wrong state.")
     # Insurance is optional: offer it once, in the same message, never as a blocker.
     if (not req.insurance_provider and not req.insurance_declined and asked_counts.get("insurance", 0) == 0):
         lines.append("*(Optional)* Which **health insurer** do you have? Say *none* to skip.")
