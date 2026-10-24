@@ -44,7 +44,9 @@ def score_candidate(c: RankedCandidate, req: CareRequest, weights: RankingWeight
     c.capability_checks = {r: r in capabilities for r in required}
     if not spec or not all(c.capability_checks.values()):
         missing = [r for r, ok in c.capability_checks.items() if not ok]
-        c.rule_flags.append("Clinical gate failed: " + (", ".join(missing) or "current specialty evidence unavailable"))
+        flag = "Clinical gate failed: " + (", ".join(missing) or "current specialty evidence unavailable")
+        if flag not in c.rule_flags:
+            c.rule_flags.append(flag)
         return False
     # An unspecified service is consultation-level navigation only, not procedure clearance.
     capability = 1.0 if required else float("outpatient_consultation" in capabilities)

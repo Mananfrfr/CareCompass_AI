@@ -80,7 +80,7 @@ def verify(candidates: list[RankedCandidate], req: CareRequest, known_evidence_i
             c.specialty_signal = "weak" if spec_ev else "none"
             downgraded = True
             notes.append("specialty claim lacked authoritative evidence")
-        if c.specialty_signal != "none" and not spec_ev:
+        if c.specialty_signal not in ("none", "general") and not spec_ev:
             c.specialty_signal = "none"
             downgraded = True
             notes.append("specialty signal had no evidence record")
@@ -118,8 +118,22 @@ def verify(candidates: list[RankedCandidate], req: CareRequest, known_evidence_i
 
         # Recompute clinical gates and tier after all claim downgrades.
         from app.matching.clinical_scoring import score_candidate
+        from app.matching.ranking import LEAD_SIGNALS, make_lead
         from app.config import RankingWeights
-        if not score_candidate(c, req, RankingWeights()):
+        if score_candidate(c, req, RankingWeights()):
+            c.match_kind = "verified"
+        elif c.specialty_signal in LEAD_SIGNALS and not c.hospital.synthetic and any(
+                e.claim_type == ClaimType.HOSPITAL_EXISTS and e.is_authoritative for e in c.evidence):
+            # Real hospital with public evidence but no verified service: kept only as a labelled lead.
+            if c.match_kind != "lead":
+                downgraded = True
+                notes.append("clinical evidence gate not met - shown as a lead to confirm, not a verified match")
+            make_lead(c, req)
+            if c.specialty_signal == "general" and not any(
+                    e.claim_type == ClaimType.CAPABILITY and e.claim_value == "multispeciality_hospital" for e in c.evidence):
+                report.rejected.append((name, "general-hospital lead without supporting evidence"))
+                continue
+        else:
             report.rejected.append((name, "clinical capability gate or minimum evidence score failed"))
             # Retain as an unverified directory lead if not duplicate
             if c.hospital.hospital_id not in seen_ids and identity not in seen_identity:

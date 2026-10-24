@@ -53,7 +53,10 @@ class RankingWeights:
 
 @dataclass(frozen=True)
 class Settings:
-    data_mode: str = field(default_factory=lambda: _env("CARECOMPASS_DATA_MODE", "fixture").lower())
+    # "live" (default): real public data everywhere - national hospital directory, government catalogs,
+    # OpenStreetMap (Overpass) and the IRDAI register. "fixture": synthetic demo data for the demo cities
+    # (Jaipur, Delhi, Ajmer) and the real national directory for every other city.
+    data_mode: str = field(default_factory=lambda: _env("CARECOMPASS_DATA_MODE", "live").lower())
     database_url: str = field(
         default_factory=lambda: _env("DATABASE_URL", f"sqlite:///{(DATA_DIR / 'carecompass.db').as_posix()}")
     )

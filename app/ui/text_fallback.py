@@ -49,8 +49,78 @@ def understanding_summary(req: CareRequest) -> str:
     return "\n".join(parts)
 
 
+def states_text(values: list[str]) -> str:
+    out = []
+    for v in values:
+        try:
+            out.append(STATE_TEXT[InsuranceState(v)])
+        except ValueError:
+            out.append(v)
+    return "; ".join(out)
+
+
 def _states(c: RankedCandidate) -> str:
     return "; ".join(STATE_TEXT[s] for s in c.insurance_states)
+
+
+def insurer_notes(req: CareRequest, i_result) -> list[str]:
+    """Actionable insurer guidance for real insurers (official site, plan documents, register)."""
+    notes = []
+    plan = getattr(i_result, "matched_plan", None)
+    if plan:
+        line = (f"Your plan matched the IRDAI register entry **{plan['name']}** (UIN `{plan['uin']}`, register year "
+                f"{plan.get('year') or 'n/a'}).")
+        if plan.get("wording_url"):
+            line += f" [Official policy wording (PDF)]({plan['wording_url']})"
+        notes.append(line)
+    for finding in getattr(i_result, "policy_findings", []):
+        if finding.evidence.source_type.value == "official_policy_document":
+            kind = "waiting-period" if finding.state == InsuranceState.WAITING_PERIOD_APPLIES else "exclusion"
+            notes.append(f"Policy wording {kind} clause mentioning this procedure: \"{finding.evidence.excerpt[:220]}\" "
+                         "- confirm how it applies to you with the insurer.")
+    for g in getattr(i_result, "guidance", []):
+        notes.append(g)
+    products = getattr(i_result, "registered_products", [])
+    if products and not plan:
+        names = "; ".join(f"{p['name']} (UIN {p['uin']})" for p in products[:4])
+        notes.append(f"Registered {req.insurance_provider} products include: {names}. Tell me which one is yours.")
+    for link in getattr(i_result, "official_links", []):
+        notes.append(f"Check network hospitals: [{link['label']}]({link['url']})")
+    return notes
+
+
+def _contact_line(c: RankedCandidate) -> str:
+    h = c.hospital
+    bits = []
+    if h.phone:
+        bits.append(f"📞 {h.phone}")
+    bits.append(f"[📍 Map]({h.map_url})")
+    bits.append(f"[Directions]({h.directions_url})")
+    if h.distance_km is not None:
+        bits.append(f"~{h.distance_km:.0f} km from centre")
+    if h.website:
+        bits.append(f"[Website]({h.website})")
+    return " · ".join(bits)
+
+
+def _candidate_lines(i: int, c: RankedCandidate) -> list[str]:
+    lines = []
+    if c.match_kind == "lead":
+        lines.append(f"\n**{i}. {c.hospital.name}** ({c.hospital.city}) - lead score {c.suitability_score:.0f}/100 "
+                     f"(evidence match, not a quality rating), evidence confidence *{c.evidence_confidence}*")
+    else:
+        lines.append(f"\n**{i}. {c.hospital.name}** ({c.hospital.city}) - suitability {c.suitability_score:.0f}/100, "
+                     f"CareCompass tier **{c.contextual_tier or 'unrated'}**, evidence confidence *{c.evidence_confidence}*")
+    lines.append(f"   - {c.explanation}")
+    lines.append(f"   - {_contact_line(c)}")
+    lines.append(f"   - Insurance: {_states(c)}")
+    for conflict in c.conflicts:
+        lines.append(f"   - ⚠️ Conflict: {conflict}")
+    if c.hospital.location_note:
+        lines.append(f"   - ⚠️ {c.hospital.location_note}")
+    urls = sorted({e.source_url for e in c.evidence})[:3]
+    lines.append(f"   - Sources: {', '.join(urls)} (checked {c.last_verified})")
+    return lines
 
 
 def shortlist_text(req: CareRequest, candidates: list[RankedCandidate], data_mode: str, narrative: str | None,
@@ -60,21 +130,26 @@ def shortlist_text(req: CareRequest, candidates: list[RankedCandidate], data_mod
         lines += [SYNTHETIC_NOTICE, ""]
     if narrative:
         lines += [narrative, ""]
-    lines.append(f"**Shortlist - {specialty_label(req.care_specialty)} in {req.city}**")
-    for i, c in enumerate(candidates, start=1):
-        lines.append(f"\n**{i}. {c.hospital.name}** ({c.hospital.city}) - suitability {c.suitability_score:.0f}/100, "
-                     f"CareCompass tier **{c.contextual_tier or 'unrated'}**, evidence confidence *{c.evidence_confidence}*")
-        lines.append(f"   - {c.explanation}")
-        lines.append(f"   - Insurance: {_states(c)}")
-        for conflict in c.conflicts:
-            lines.append(f"   - ⚠️ Conflict: {conflict}")
-        if c.missing_evidence:
-            lines.append(f"   - Missing: {c.missing_evidence[0]}")
-        urls = sorted({e.source_url for e in c.evidence})[:3]
-        lines.append(f"   - Sources: {', '.join(urls)} (checked {c.last_verified})")
-    lines.append("\nTiers are condition-specific CareCompass scores, not official hospital ratings. Unknown factors earn zero points. Fewer than five results means insufficient qualified evidence.")
+    verified = [c for c in candidates if c.match_kind != "lead"]
+    leads = [c for c in candidates if c.match_kind == "lead"]
+    i = 0
+    if verified:
+        lines.append(f"**Verified matches - {specialty_label(req.care_specialty)} in {req.city}**")
+        for c in verified:
+            i += 1
+            lines += _candidate_lines(i, c)
+    if leads:
+        lines.append(f"\n**{'More options' if verified else 'Hospitals to call'} - {specialty_label(req.care_specialty)} "
+                     f"in {req.city}** _(real, publicly listed hospitals; the department is not yet verified - "
+                     "call to confirm before visiting)_")
+        for c in leads:
+            i += 1
+            lines += _candidate_lines(i, c)
+    if verified:
+        lines.append("\nTiers are condition-specific CareCompass scores, not official hospital ratings. "
+                     "Unknown factors earn zero points.")
     for note in source_notes:
-        lines.append(f"\n_{note}_")
+        lines.append(f"\n_{note}_" if not note.startswith(("Check network", "Your plan", "Policy wording")) else f"\n{note}")
     lines.append("\nReply with a number (e.g. **1**) to see the evidence, **approve** to save this shortlist, "
                  "or tell me what to change.")
     lines.append(DISCLAIMER)
@@ -82,11 +157,16 @@ def shortlist_text(req: CareRequest, candidates: list[RankedCandidate], data_mod
 
 
 def detail_text(c: RankedCandidate, req: CareRequest) -> str:
+    score_label = "Lead score" if c.match_kind == "lead" else "Suitability"
     lines = [f"**{c.hospital.name}**", f"- Address: {c.hospital.address or c.hospital.city}",
-             f"- Why ranked: {c.explanation}",
+             f"- Contact & map: {_contact_line(c)}",
+             f"- Why listed: {c.explanation}",
              f"- Insurance: {_states(c)}",
-             f"- Suitability {c.suitability_score:.0f}/100 ({', '.join(f'{k} {v:.2f}' for k, v in c.score_breakdown.items())}); "
+             f"- {score_label} {c.suitability_score:.0f}/100 ({', '.join(f'{k} {v:.2f}' for k, v in c.score_breakdown.items())}); "
              f"evidence confidence *{c.evidence_confidence}*"]
+    if c.hospital.beds or c.hospital.facilities:
+        lines.append(f"- Listed facilities: {', '.join(f.replace('_', ' ') for f in c.hospital.facilities) or 'n/a'}"
+                     + (f"; {c.hospital.beds} beds" if c.hospital.beds else ""))
     for conflict in c.conflicts:
         lines.append(f"- ⚠️ Conflict: {conflict}")
     for m in c.missing_evidence:
@@ -100,6 +180,9 @@ def detail_text(c: RankedCandidate, req: CareRequest) -> str:
     if InsuranceState.NETWORK_VERIFIED in c.insurance_states:
         lines.append("\n_A network listing means the hospital appears in the insurer's directory. It does not confirm "
                      "your policy covers this treatment or that a cashless request would be accepted._")
+    if c.match_kind == "lead":
+        lines.append("\n**Before you go:** call and ask whether this branch has a "
+                     f"{specialty_label(req.care_specialty)} specialist, the next available OPD slot and the consultation fee.")
     lines.append("\nSay **save** to save the shortlist with this choice, or **back** to return to the list.")
     return "\n".join(lines)
 
@@ -122,9 +205,12 @@ def confirmation_text(result: ActionResult, payload: ShortlistPayload, selected_
     lines.append("\n**Saved shortlist**")
     for item in payload.items:
         mark = " ← your choice" if item.hospital_id == payload.selected_hospital_id else ""
-        lines.append(f"- {item.rank}. {item.name} - {', '.join(item.insurance_states)}{mark}")
+        lead = " (call to confirm the department)" if item.match_kind == "lead" else ""
+        phone = f" · 📞 {item.phone}" if item.phone else ""
+        lines.append(f"- {item.rank}. {item.name}{lead}{phone} - {states_text(item.insurance_states)}{mark}")
     lines.append("\n**Next steps**")
     lines.append("- Call the hospital to confirm the department, doctor availability and costs.")
+    lines.append(f"- Say **care brief** for a free preparation checklist (questions to ask, documents to carry).")
     if payload.insurer:
         lines.append(f"- Call {payload.insurer} (or your TPA) with your policy number to confirm eligibility and "
                      "pre-authorisation before admission.")

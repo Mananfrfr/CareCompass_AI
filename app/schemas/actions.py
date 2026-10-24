@@ -20,6 +20,9 @@ class ShortlistItem(BaseModel):
     evidence_ids: list[str]
     source_urls: list[str]
     synthetic: bool = False
+    match_kind: str = "verified"
+    phone: str | None = None
+    map_url: str | None = None
 
 
 class ShortlistPayload(BaseModel):

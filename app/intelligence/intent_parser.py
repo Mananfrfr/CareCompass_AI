@@ -32,6 +32,10 @@ PLAN = re.compile(
 FREEFORM_CITY = re.compile(r"\b(?:in|near|at|around|from)\s+([A-Z][a-z]{2,}(?:\s[A-Z][a-z]{2,})?)\b")
 NOT_CITIES = {"The", "My", "Our", "This", "That", "January", "February", "March", "April", "May", "June", "July",
               "August", "September", "October", "November", "December", "Hospital", "India", "Pain"}
+EXPLICIT_PLAN = re.compile(
+    r"\b(?:my\s+)?(?:plan|policy|product)(?:\s+name)?\s*(?:is|:|=|called|named)\s*([A-Za-z0-9][\w+&()' .-]{2,70}?)"
+    r"(?=\s*(?:[.,;!?\n]|$|\band\b|\bwith\b|\bfrom\b))", re.I)
+UIN = re.compile(r"\b[A-Z]{3}[A-Z]{2}[A-Z]{2}\w{11,16}\b")
 NEARBY = re.compile(r"\b(?:nearby cit|other cit|anywhere|outside the city|near ?by areas?|willing to travel)", re.I)
 
 SPECIALTY_KEYS = tuple(kb.SPECIALTIES)
@@ -71,6 +75,8 @@ def rule_extract(text: str, report_text: str | None = None) -> CareRequest:
     req.duration = (m.group(1) if (m := DURATION.search(text)) else None)
     req.city = kb.find_city(text)
     if not req.city:
+        req.city = kb.find_directory_city(text)
+    if not req.city:
         for m in FREEFORM_CITY.finditer(text):
             cand = m.group(1)
             if cand.split()[0] not in NOT_CITIES and not kb.find_insurer(cand):
@@ -86,7 +92,13 @@ def rule_extract(text: str, report_text: str | None = None) -> CareRequest:
             req.insurance_provider = registered_provider
             req.insurance_plan = identity["name"]
     req.insurance_declined = req.insurance_provider is None and kb.declines_insurance(text)
-    if not req.insurance_plan and (m := PLAN.search(text)) and req.insurance_provider:
+    if req.insurance_plan:
+        pass  # an exact IRDAI register identity already matched
+    elif m := EXPLICIT_PLAN.search(text):
+        req.insurance_plan = m.group(1).strip().strip(".")  # "my plan is X" works without repeating the insurer
+    elif (m := UIN.search(text)) and re.search(r"\d{5}V\d{6}", m.group(0)):
+        req.insurance_plan = m.group(0)
+    elif (m := PLAN.search(text)) and req.insurance_provider:
         req.insurance_plan = m.group(1).strip()
     req.allow_nearby = bool(NEARBY.search(text))
     low = text.lower()

@@ -22,6 +22,8 @@ def _specialty_signal(evidence: list[Evidence], specialty: str) -> tuple[str, bo
         return "directory", False  # community directory tag: useful, not authoritative
     if relevant:
         return "weak", False
+    if any(e.claim_type == ClaimType.CAPABILITY and e.claim_value == "multispeciality_hospital" for e in evidence):
+        return "general", False  # general / multi-speciality hospital; department must be confirmed
     return "none", False
 
 
@@ -124,6 +126,9 @@ def build_candidates(request: CareRequest, hospitals: HospitalResearchResult,
 
         if signal == "none":
             missing.append(f"No source found advertising {specialty.replace('_', ' ')} services")
+        elif signal == "general":
+            missing.append(f"General / multi-speciality hospital: no source lists a {specialty.replace('_', ' ')} "
+                           "department - call to confirm")
         elif not verified:
             missing.append("Specialty not confirmed by the hospital's own website")
         retrieved = [e.retrieved_at for e in own + ins_evidence]

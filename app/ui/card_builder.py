@@ -65,14 +65,17 @@ def _specialty_text(c: RankedCandidate, req: CareRequest) -> str:
     return {"verified": f"{label}: advertised by hospital",
             "directory": f"{label}: listed in public directory (unconfirmed)",
             "weak": f"{label}: suggested by name only (unverified)",
-            "none": f"{label}: no evidence found"}[c.specialty_signal]
+            "general": f"General hospital: {label} not listed - call to confirm",
+            "none": f"{label}: no evidence found"}.get(c.specialty_signal, label)
 
 
 def shortlist_card(case_id: str, version: int, req: CareRequest, candidates: list[RankedCandidate],
                    data_mode: str) -> Card:
     items = []
     for i, c in enumerate(candidates, start=1):
-        badges = [network_badge(c.insurance_states),
+        badges = [{"label": "Call to confirm", "variant": "warning"} if c.match_kind == "lead"
+                  else {"label": "Verified service", "variant": "success"},
+                  network_badge(c.insurance_states),
                   {"label": f"Evidence: {c.evidence_confidence}", "variant": "success" if c.evidence_confidence == "high" else "info"}]
         if c.hospital.synthetic:
             badges.append({"label": "Synthetic demo data", "variant": "warning"})
@@ -83,7 +86,11 @@ def shortlist_card(case_id: str, version: int, req: CareRequest, candidates: lis
             "title": f"{i}. {c.hospital.name}",
             "subtitle": f"{c.hospital.city} · {_specialty_text(c, req)}",
             "badges": badges,
-            "secondary_text": f"CareCompass tier {c.contextual_tier or 'unrated'} · Suitability {c.suitability_score:.0f}/100 · verified {c.last_verified or 'n/a'}",
+            "secondary_text": (f"Lead to confirm · score {c.suitability_score:.0f}/100"
+                               + (f" · ~{c.hospital.distance_km:.0f} km" if c.hospital.distance_km is not None else "")
+                               + (f" · {c.hospital.phone}" if c.hospital.phone else "")
+                               if c.match_kind == "lead" else
+                               f"CareCompass tier {c.contextual_tier or 'unrated'} · Suitability {c.suitability_score:.0f}/100 · verified {c.last_verified or 'n/a'}"),
             "primary_cta": {"label": "View evidence",
                             "selection": {"action": "select_hospital", "hospital_id": c.hospital.hospital_id,
                                           "case_id": case_id, "version": version}},
@@ -96,10 +103,12 @@ def shortlist_card(case_id: str, version: int, req: CareRequest, candidates: lis
 def detail_card(case_id: str, version: int, c: RankedCandidate, req: CareRequest) -> Card:
     rows = [
         {"label": "Location", "value": f"{c.hospital.address or c.hospital.city}"},
+        {"label": "Map", "value": c.hospital.map_url},
+        {"label": "Phone", "value": c.hospital.phone or "Not listed - use the map link"},
         {"label": "Service", "value": _specialty_text(c, req)},
         {"label": "Insurance", "value": "; ".join(STATE_TEXT[s] for s in c.insurance_states) or "Not checked"},
         {"label": "Evidence confidence", "value": c.evidence_confidence},
-        {"label": "Suitability", "value": f"{c.suitability_score:.0f}/100 ({', '.join(f'{k} {v:.2f}' for k, v in c.score_breakdown.items())})"},
+        {"label": "Lead score" if c.match_kind == "lead" else "Suitability", "value": f"{c.suitability_score:.0f}/100 ({', '.join(f'{k} {v:.2f}' for k, v in c.score_breakdown.items())})"},
         {"label": "Why ranked", "value": c.explanation},
     ]
     for conflict in c.conflicts:

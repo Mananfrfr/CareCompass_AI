@@ -10,6 +10,8 @@ Run: python -m app.agents.coordinator   (mailbox mode connects it to Agentverse 
 
 from __future__ import annotations
 
+import re
+
 import asyncio
 import time
 from collections import defaultdict
@@ -120,6 +122,10 @@ def to_chat_message(reply: Reply) -> ChatMessage:
     return ChatMessage(timestamp=datetime.now(timezone.utc), msg_id=uuid4(), content=content)
 
 
+PAYMENT_TRIGGER = re.compile(r"(?:buy|get|purchase|pay for)(?: the| a| my)? (?:preparation |prep |premium |expanded )?report[.!]?",
+                             re.I)
+
+
 async def _send_payment_text(ctx, sender, text):
     await ctx.send(sender, to_chat_message(Reply(text)))
 
@@ -176,7 +182,7 @@ async def on_chat(ctx: Context, sender: str, msg: ChatMessage) -> None:
     key = session_key(sender)
     async with _session_locks[key]:
         try:
-            if text.strip().lower() == "buy preparation report" and not report_text and not notices:
+            if PAYMENT_TRIGGER.fullmatch(text.strip()) and not report_text and not notices:
                 if repo.record_inbound(key, str(msg.msg_id)):
                     await report_payments.request(ctx, sender)
                 return

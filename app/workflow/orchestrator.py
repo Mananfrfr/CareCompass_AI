@@ -144,6 +144,10 @@ class CareCompassWorkflow:
             self.repo.audit(case.case_id, trace, "case_created")
 
         state = CaseState(case.state)
+        if state in SHORTLIST_STATES and not self._results(case):
+            # Nothing was shown, so there is nothing to approve: treat the message as a revised request.
+            self._move(case, CaseState.COLLECTING_INPUT, trace, reason="empty shortlist revised")
+            state = CaseState.COLLECTING_INPUT
         if state in SHORTLIST_STATES:
             sel = parse_selection(text, self._ids(case), self._names(case))
             if sel.action == "clarify_approval":
@@ -246,6 +250,21 @@ class CareCompassWorkflow:
                                                                                ok=False, error=i_out.error)])
         candidates = [apply_candidate_rules(c, req) for c in build_candidates(req, h_out.result, insurer_result)]
         ranked = rank(candidates, req, self.settings.weights)
+        widened = False
+        if not ranked and not req.allow_nearby:
+            # Nothing usable inside the city: look within ~40 km once, and say so explicitly.
+            near_query = h_query.model_copy(update={"allow_nearby": True, "task_id": "task_" + uuid.uuid4().hex[:12]})
+            near = await research.hospitals(near_query)
+            self.repo.record_task(case.case_id, near_query.task_id, near.agent, "succeeded" if near.result else "failed",
+                                  near.attempts, near.latency_ms, near.error)
+            if near.result and near.result.hospitals:
+                near_req = req.model_copy(update={"allow_nearby": True})
+                near_candidates = [apply_candidate_rules(c, near_req)
+                                   for c in build_candidates(near_req, near.result, insurer_result)]
+                near_ranked = rank(near_candidates, near_req, self.settings.weights)
+                if near_ranked:
+                    req, ranked, widened = near_req, near_ranked, True
+                    h_out = near
 
         self._move(case, CaseState.VERIFYING, trace)
         known = {e.evidence_id for e in h_out.result.evidence}
@@ -254,22 +273,28 @@ class CareCompassWorkflow:
             known |= {p.evidence.evidence_id for p in insurer_result.policy_findings}
         report = verify(ranked, req, known)
         order = {Eligibility.PRIMARY: 0, Eligibility.SECONDARY: 1}
-        final = sorted(report.passed, key=lambda c: (order[c.eligibility], -c.suitability_score))[:SHORTLIST_SIZE]
+        final = sorted(report.passed, key=lambda c: (c.match_kind != "verified", order[c.eligibility],
+                                                     -c.suitability_score))[:SHORTLIST_SIZE]
         self.repo.audit(case.case_id, trace, "verification", passed=[c.hospital.hospital_id for c in report.passed],
                         rejected=report.rejected, notes=report.notes)
 
         source_notes = self._source_notes(h_out.result, insurer_result, req)
         if req.insurance_declined or req.budget_inr or "low cost" in req.preferences:
             source_notes.append("For official government and financial-assistance avenues, ask **financial help**. Eligibility and package acceptance are checked separately from hospital ranking.")
+        if widened:
+            source_notes.insert(0, f"No suitable hospital was listed inside {req.city} itself, so I widened the search "
+                                   "to about 40 km around it. Distances are shown for each option.")
         if insurer_result is not None and insurer_result.plan_required:
             asked = json.loads(case.asked_json or "{}")
             asked["plan"] = asked.get("plan", 0) + 1
             case.asked_json = json.dumps(asked)
         partial = (not final or (insurer_result is not None and not insurer_result.any_source_ok)
-                   or all(c.eligibility != Eligibility.PRIMARY for c in final))
+                   or all(c.eligibility != Eligibility.PRIMARY for c in final)
+                   or all(c.match_kind != "verified" for c in final))
         case.results_json = json.dumps([c.model_dump(mode="json") for c in final])
         case.research_meta_json = json.dumps({"rejected": report.rejected, "source_notes": source_notes,
                                               "data_mode": h_out.result.data_mode})
+        case.data_mode = h_out.result.data_mode  # demo cities stay "fixture"; every other city is real data
         case.shortlist_version = (case.shortlist_version or 0) + 1
         case.selected_hospital_id = None
         case.request_json = req.model_dump_json()
@@ -292,7 +317,8 @@ class CareCompassWorkflow:
                     addr = f" - {lead.hospital.address}" if lead.hospital.address else ""
                     lead_lines.append(f"- **{lead.hospital.name}** ({lead.hospital.city}){addr}\n  _Status: {flags}_")
                 lines.append("\n".join(lead_lines))
-            lines.append("You could try a nearby larger city (e.g. *\"also consider nearby cities\"*) or another city.")
+            lines.append("Try the nearest district headquarters or a larger city (for example *\"search in Jaipur\"*), or ask "
+                         "for a **general physician** first - they can refer you to the right specialist.")
             return [Reply("\n\n".join(prefix + lines + [f"_{n}_" for n in source_notes]))]
 
         narrative, method = await explainer.summarize(self.asi1, req, final)
@@ -308,8 +334,11 @@ class CareCompassWorkflow:
         if failed:
             notes.append(f"{len(failed)} hospital source(s) could not be reached; results may be incomplete.")
         if h_result.data_mode == "live":
-            notes.append("Hospital discovery: government directories, reviewed clinical profiles and OpenStreetMap contributors (ODbL). Clinical tiers require separate treatment evidence.")
+            notes.append("Hospital discovery: National Health Portal hospital directory (MoHFW, data.gov.in), state "
+                         "government directories, reviewed clinical profiles and OpenStreetMap (ODbL). Directory "
+                         "entries can be out of date - always call before visiting.")
         if req.insurance_provider and i_result is not None:
+            notes.extend(tf.insurer_notes(req, i_result))
             if not i_result.any_source_ok:
                 reason = i_result.source_status[0].error if i_result.source_status else "unavailable"
                 notes.append(f"{req.insurance_provider} network status was NOT checked: {reason} "
@@ -396,7 +425,7 @@ class CareCompassWorkflow:
         if row is None:
             return Reply(f"I couldn't find {confirmation_id} in this chat.")
         payload = json.loads(row.payload_json)
-        items = "\n".join(f"- {i['rank']}. {i['name']} ({', '.join(i['insurance_states'])})" for i in payload["items"])
+        items = "\n".join(f"- {i['rank']}. {i['name']} ({tf.states_text(i['insurance_states'])})" for i in payload["items"])
         return Reply(f"**{confirmation_id}** - saved {row.created_at:%Y-%m-%d %H:%M} UTC\n{items}")
 
     # ------------------------------------------------------------------ helpers

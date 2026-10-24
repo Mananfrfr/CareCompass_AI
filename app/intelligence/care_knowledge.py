@@ -233,6 +233,30 @@ def find_city(text: str) -> str | None:
     return None
 
 
+_PLACE_CUE = re.compile(r"\b(?:in|near|at|around|from|city|live in|based in|staying in)\s+([a-z][a-z.]+(?:\s[a-z]+)?)", re.I)
+_NOT_PLACES = {"pain", "my", "the", "a", "an", "india", "hospital", "knee", "back", "case", "fact", "time", "general",
+               "need", "network", "touch", "person", "addition", "private", "government", "the hospital"}
+
+
+def find_directory_city(text: str) -> str | None:
+    """Any Indian district/town from the national hospital directory, when introduced by a place cue
+    ("in Pali", "near Bhilwara"). Keeps CareCompass usable beyond the big-city alias list."""
+    try:
+        from app.research.india_directory import get_directory
+        directory = get_directory()
+    except Exception:  # noqa: BLE001 - directory is optional
+        return None
+    for m in _PLACE_CUE.finditer(text):
+        words = m.group(1).split()
+        for cand in (" ".join(words[:2]), words[0]):
+            if cand.lower() in _NOT_PLACES:
+                continue
+            city = directory.known_city(cand)
+            if city:
+                return city
+    return None
+
+
 def find_insurer(text: str) -> str | None:
     low = text.lower()
     for alias in sorted(INSURER_ALIASES, key=len, reverse=True):

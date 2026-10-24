@@ -37,3 +37,10 @@ References: [Fetch Stripe example](https://innovationlab.fetch.ai/resources/docs
 ## Hardening verified on 24 October
 
 Checkout creation validates a test session ID, test mode, client-secret binding and expiry. Provider failures produce a recoverable message without a payment request. Malformed settlement data fails closed. An expired order is reconciled before any action: a verified paid order delivers its report; otherwise no replacement checkout is created and the user is told not to pay again. `*_data.json` agent storage is git-ignored because it can contain checkout metadata. These paths are covered by mocked-provider tests, not live Stripe transactions.
+
+## Fixes on 24 October (evening)
+
+- **RequestPayment metadata** now follows Fetch's Stripe example: `metadata.stripe` carries `client_secret`, `publishable_key`, `checkout_session_id`, `id`, `currency`, `amount`, `amount_cents` and `ui_mode: "embedded"`, and `metadata.service` names the product. All values are strings, because `uagents_core`'s `RequestPayment.metadata` only accepts `str | dict[str, str]` (an integer `amount_cents` would fail validation).
+- **No more permanent lock-out after expiry.** Previously an expired, unpaid checkout blocked the paid report for that shortlist forever. Now the agent asks Stripe: if the session is *paid*, the report is delivered; if Stripe reports it `expired` **and** `unpaid` for this order's reference, the old reference is revoked and one fresh checkout is issued (no double charge is possible); in any other state the user is told not to pay again.
+- **Trigger phrases**: `buy report`, `get the preparation report`, `purchase premium report`, `pay for report` and the original `buy preparation report`.
+- Tests: `test_confirmed_expired_unpaid_checkout_is_reissued_once`, `test_request_metadata_matches_fetch_stripe_shape`.

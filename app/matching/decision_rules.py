@@ -32,6 +32,8 @@ def r2_specialty(c: RankedCandidate, req: CareRequest) -> RuleOutcome:
     if not c.specialty_verified:
         if c.specialty_signal == "none":
             return RuleOutcome("R2", Eligibility.SECONDARY, "No evidence this hospital offers the relevant service")
+        if c.specialty_signal == "general":
+            return RuleOutcome("R2", Eligibility.SECONDARY, "General hospital - relevant department not listed; confirm by phone")
         return RuleOutcome("R2", Eligibility.SECONDARY, "Relevant service suggested but not verified on an official source")
     return RuleOutcome("R2", None)
 

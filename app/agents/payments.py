@@ -61,20 +61,35 @@ class StripeTestProvider:
             raise ValueError("Invalid test checkout response")
         return data
 
-    async def verified(self, order: dict):
-        if not self.configured:
-            return False
+    async def _session(self, order: dict) -> dict | None:
         checkout = order["checkout"]
         if not checkout.startswith("cs_test_") or not checkout.replace("_", "").isalnum():
-            return False
+            return None
         async with httpx.AsyncClient(timeout=20, transport=self.transport) as client:
             response = await client.get(f"https://api.stripe.com/v1/checkout/sessions/{checkout}",
                 headers={"Authorization": f"Bearer {self.secret}"})
             response.raise_for_status()
             data = response.json()
         if not isinstance(data, dict) or not isinstance(data.get("metadata"), dict):
+            return None
+        return data
+
+    async def definitively_expired(self, order: dict) -> bool:
+        """True only when Stripe itself reports the session expired AND unpaid - then a new checkout is safe."""
+        if not self.configured:
             return False
-        return (data.get("id") == checkout and data.get("livemode") is False
+        data = await self._session(order)
+        return bool(data and data.get("id") == order["checkout"] and data.get("status") == "expired"
+                    and data.get("payment_status") == "unpaid"
+                    and data.get("metadata", {}).get("reference") == order["reference"])
+
+    async def verified(self, order: dict):
+        if not self.configured:
+            return False
+        data = await self._session(order)
+        if data is None:
+            return False
+        return (data.get("id") == order["checkout"] and data.get("livemode") is False
                 and data.get("status") == "complete" and data.get("payment_status") == "paid"
                 and data.get("amount_total") == 100 and data.get("currency") == "usd"
                 and data.get("metadata", {}).get("reference") == order["reference"]
@@ -134,11 +149,22 @@ class ReportPayments:
                     ctx.storage.set("report_order:" + scope, order)
                     await self.send_text(ctx, sender, "TEST payment verified. " + expanded_report(
                         json.loads(row.payload_json), row.confirmation_id))
-                else:
+                    return
+                expired_unpaid = False
+                check = getattr(self.provider, "definitively_expired", None)
+                if check is not None:
+                    try:
+                        expired_unpaid = await check(order)
+                    except (httpx.HTTPError, ValueError, KeyError):
+                        expired_unpaid = False
+                if not expired_unpaid:
                     await self.send_text(ctx, sender, "This test checkout expired or could not be reconciled. "
                         "No replacement checkout was created. Do not pay again; contact the operator. "
                         "Your free **care brief** remains available.")
-                return
+                    return
+                # Stripe confirms the old checkout expired without payment: a fresh checkout cannot double-charge.
+                ctx.storage.set("report_reference:" + order["reference"], None)
+                order = None
             if not order:
                 reference = "report_" + uuid4().hex
                 try:
@@ -160,7 +186,9 @@ class ReportPayments:
             recipient=ctx.agent.address, deadline_seconds=max(1, int(order["expires"] - time.time())),
             reference=order["reference"], description="CareCompass expanded preparation report — TEST ONLY",
             metadata={"stripe": {"client_secret": order["client_secret"], "publishable_key": self.provider.public,
-                                   "checkout_session_id": order["checkout"], "currency": "usd", "amount": "1.00"}}))
+                                 "checkout_session_id": order["checkout"], "id": order["checkout"],
+                                 "currency": "usd", "amount": "1.00", "amount_cents": "100", "ui_mode": "embedded"},
+                      "service": "carecompass_report"}))
 
     async def commit(self, ctx, sender, msg: CommitPayment):
         async with self.lock:

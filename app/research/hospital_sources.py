@@ -260,10 +260,146 @@ class OSMHospitalSource:
         return ev_list
 
 
+OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+
+
+class OverpassHospitalSource:
+    """Live map discovery from OpenStreetMap via the Overpass API.
+
+    Replaces the old free-text Nominatim search (max 40 fuzzy matches, often missing big
+    hospitals) with a radius query around the city centre that returns *every* mapped hospital,
+    plus clinics that declare a specialty, with their tags (speciality, phone, website, beds).
+    """
+
+    name = "openstreetmap-overpass"
+    _cache: dict[str, tuple[float, list[dict]]] = {}
+    _limiter = RateLimiter(1.1)
+
+    def __init__(self, fetcher: SafeFetcher, radius_m: int = 15000, max_candidates: int = 25,
+                 cache_ttl_s: int = 6 * 3600, centre_lookup=None):
+        self.api_fetcher = SafeFetcher(fetcher.user_agent, timeout_s=max(fetcher.timeout_s, 25), resolver=fetcher.resolver,
+                                       transport=fetcher.transport, respect_robots=False, max_attempts=1,
+                                       allowed_hosts={"overpass-api.de", "nominatim.openstreetmap.org"})
+        self.radius_m = radius_m
+        self.max_candidates = max_candidates
+        self.cache_ttl_s = cache_ttl_s
+        self.centre_lookup = centre_lookup
+
+    async def _centre(self, city: str) -> tuple[float, float] | None:
+        if self.centre_lookup:
+            centre = self.centre_lookup(city)
+            if centre:
+                return centre
+        await self._limiter.wait()
+        doc = await self.api_fetcher.fetch(NOMINATIM_URL, params={"q": f"{city}, India", "format": "jsonv2",
+                                                                  "limit": "1", "countrycodes": "in"})
+        rows = json.loads(doc.text)
+        if isinstance(rows, list) and rows:
+            return float(rows[0]["lat"]), float(rows[0]["lon"])
+        return None
+
+    async def _elements(self, lat: float, lon: float) -> list[dict]:
+        key = f"{lat:.3f},{lon:.3f},{self.radius_m}"
+        cached = self._cache.get(key)
+        if cached and time.time() - cached[0] < self.cache_ttl_s:
+            return cached[1]
+        around = f"(around:{self.radius_m},{lat:.5f},{lon:.5f})"
+        query = (f'[out:json][timeout:25];(nwr["amenity"="hospital"]{around};nwr["healthcare"="hospital"]{around};'
+                 f'nwr["amenity"="clinic"]["healthcare:speciality"]{around};);out center tags 400;')
+        await self._limiter.wait()
+        doc = await self.api_fetcher.fetch(OVERPASS_URL, params={"data": query})
+        data = json.loads(doc.text)
+        elements = data.get("elements", []) if isinstance(data, dict) else []
+        self._cache[key] = (time.time(), elements)
+        return elements
+
+    async def search_hospitals(self, query: HospitalResearchQuery) -> HospitalResearchResult:
+        result = HospitalResearchResult(task_id=query.task_id, data_mode="live")
+        city = normalize_city(query.city) or query.city.strip().title()
+        try:
+            centre = await self._centre(city)
+            if centre is None:
+                raise FetchError(f"could not locate {city}")
+            elements = await self._elements(*centre)
+        except (FetchError, UnsafeURLError, ValueError, KeyError) as exc:
+            result.source_status.append(SourceStatus(source_name=self.name, url=OVERPASS_URL, ok=False,
+                                                     error=str(exc)[:200]))
+            return result
+        result.source_status.append(SourceStatus(source_name=self.name, url=OVERPASS_URL, ok=True))
+        spec = SPECIALTIES.get(query.specialty)
+        scored = []
+        for el in elements:
+            tags = el.get("tags") or {}
+            name = (tags.get("name:en") or tags.get("name") or "").strip()
+            if not name:
+                continue
+            lat = el.get("lat") or (el.get("center") or {}).get("lat")
+            lon = el.get("lon") or (el.get("center") or {}).get("lon")
+            specialities = [s.strip().lower() for s in (tags.get("healthcare:speciality") or "").split(";") if s.strip()]
+            if spec and any(s in spec.osm_tags for s in specialities):
+                signal = "directory"
+            elif any(h in f" {name.lower()} " for h in NAME_HINTS.get(query.specialty, ())):
+                signal = "weak"
+            elif tags.get("amenity") == "hospital" or tags.get("healthcare") == "hospital":
+                signal = "general"
+            else:
+                continue
+            dist = None
+            if lat is not None and lon is not None:
+                from app.research.india_directory import haversine_km
+                dist = round(haversine_km(centre[0], centre[1], float(lat), float(lon)), 1)
+            scored.append(({"directory": 0, "weak": 1, "general": 2}[signal], dist or 999, name, el, tags, signal,
+                           lat, lon, dist))
+        scored.sort(key=lambda x: x[:3])
+        for _, _, name, el, tags, signal, lat, lon, dist in scored[: self.max_candidates]:
+            osm_url = f"https://www.openstreetmap.org/{el.get('type')}/{el.get('id')}"
+            addr = ", ".join(tags[k] for k in ("addr:housenumber", "addr:street", "addr:suburb", "addr:city",
+                                               "addr:postcode") if tags.get(k))
+            beds = re.search(r"\d+", tags.get("beds", "") or "")
+            record = HospitalRecord(
+                hospital_id=f"osm-{el.get('type')}-{el.get('id')}", name=name, city=city, address=addr or city,
+                postcode=tags.get("addr:postcode"), website=tags.get("website") or tags.get("contact:website"),
+                latitude=float(lat) if lat is not None else None, longitude=float(lon) if lon is not None else None,
+                phone=tags.get("phone") or tags.get("contact:phone"), beds=int(beds[0]) if beds else None,
+                facilities=["emergency_services"] if tags.get("emergency") == "yes" else [],
+                distance_km=dist, discovery_source=self.name,
+                ownership_type={"government": "public", "public": "public", "private": "private"}.get(
+                    tags.get("operator:type", ""), "unknown"),
+            )
+            common = dict(subject=name, subject_id=record.hospital_id, source_name="OpenStreetMap (community-maintained)",
+                          source_url=osm_url, source_type=SourceType.COMMUNITY_DIRECTORY)
+            result.hospitals.append(record)
+            result.evidence += [
+                Evidence(claim_type=ClaimType.HOSPITAL_EXISTS, claim_value=name, reliability=Reliability.MEDIUM,
+                         excerpt=f"amenity={tags.get('amenity') or tags.get('healthcare')}; {addr}"[:200], **common),
+                Evidence(claim_type=ClaimType.LOCATION, claim_value=city, city=city, reliability=Reliability.MEDIUM,
+                         excerpt=f"Mapped {dist} km from the {city} centre" if dist is not None else addr[:200], **common),
+            ]
+            if signal == "directory":
+                result.evidence.append(Evidence(claim_type=ClaimType.SPECIALTY, claim_value=query.specialty,
+                                                reliability=Reliability.MEDIUM, scope=query.specialty,
+                                                excerpt=f"healthcare:speciality={tags.get('healthcare:speciality')}",
+                                                **common))
+            elif signal == "weak":
+                result.evidence.append(Evidence(claim_type=ClaimType.SPECIALTY, claim_value=query.specialty,
+                                                reliability=Reliability.LOW,
+                                                excerpt=f"Hospital name suggests this service: '{name}'", **common))
+            else:
+                result.evidence.append(Evidence(claim_type=ClaimType.CAPABILITY, claim_value="multispeciality_hospital",
+                                                scope="hospital", reliability=Reliability.LOW,
+                                                excerpt="Mapped as a hospital; department not listed", **common))
+        return result
+
+
 def build_hospital_source(fixture_mode: bool, fetcher: SafeFetcher | None = None,
                           max_candidates: int = 40) -> HospitalSource:
+    from app.research.hospital_catalog import CombinedHospitalSource, FixtureFirstHospitalSource
+    from app.research.india_directory import DirectoryHospitalSource
     if fixture_mode:
-        return FixtureHospitalSource()
+        # Synthetic demo cities stay synthetic; every other Indian city uses the real directory.
+        return FixtureFirstHospitalSource(FixtureHospitalSource(), DirectoryHospitalSource())
     assert fetcher is not None
-    from app.research.hospital_catalog import CombinedHospitalSource
-    return CombinedHospitalSource(OSMHospitalSource(fetcher, max_candidates=max_candidates))
+    from app.research.india_directory import get_directory
+    overpass = OverpassHospitalSource(fetcher, max_candidates=min(max_candidates, 25),
+                                      centre_lookup=lambda city: get_directory().centroid(city))
+    return CombinedHospitalSource([DirectoryHospitalSource(), overpass])

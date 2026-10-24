@@ -187,5 +187,84 @@ class OfficialNetworkFileSource:
         return result
 
 
-def build_insurer_source(fixture_mode: bool) -> InsurerSource:
-    return FixtureInsurerSource() if fixture_mode else OfficialNetworkFileSource()
+class RealInsurerSource:
+    """Real insurers: imported official network lists when present, plus IRDAI register identity,
+    plan matching, policy-wording clauses (live mode) and the insurer's official website.
+
+    Never infers network membership. Without an imported official list the network state stays
+    "not checked" - but the user gets the official place to check it and their plan's documents.
+    """
+
+    def __init__(self, network_files: OfficialNetworkFileSource | None = None, wording_reader=None):
+        self.network_files = network_files or OfficialNetworkFileSource()
+        self.wording_reader = wording_reader
+
+    async def research(self, query: InsurerResearchQuery) -> InsurerResearchResult:
+        from app.research import policy_intel
+        result = await self.network_files.research(query)
+        profile = policy_intel.profile_for(query.insurer)
+        if profile is None:
+            return result
+        result.insurer_recognized = True
+        result.official_links.append({"label": f"{query.insurer} official website (network-hospital search)",
+                                      "url": profile.website})
+        products = policy_intel.registered_products(query.insurer)
+        result.registered_products = [{"name": r["name"], "uin": r.get("uin", ""), "year": r.get("financial_year", ""),
+                                       "wording_url": r.get("policy_wording_url", ""), "register_url": r["source_url"]}
+                                      for r in products]
+        total = policy_intel.count_products(query.insurer)
+        if not result.any_source_ok:
+            # Replace the generic failure with an actionable explanation (still NOT a network verdict).
+            result.source_status = [SourceStatus(
+                source_name=f"{query.insurer} network list", url=profile.website, ok=False,
+                error=(f"{query.insurer} publishes its network only through a search portal on its official "
+                       f"website, which CareCompass does not scrape. Check the exact branch at {profile.website} "
+                       "or the helpline on your policy card."))]
+        if total:
+            result.guidance.append(f"{query.insurer} has {total} health product identities in the IRDAI register "
+                                   "(registration is not proof that a product is on sale or covers you).")
+        if query.plan:
+            record = policy_intel.match_plan(query.insurer, query.plan)
+            if record:
+                result.matched_plan = {"name": record["name"], "uin": record.get("uin", ""),
+                                       "wording_url": record.get("policy_wording_url", ""),
+                                       "register_url": record["source_url"], "year": record.get("financial_year", "")}
+                findings, error = await policy_intel.policy_findings(record, query.procedure, query.insurer,
+                                                                     self.wording_reader)
+                result.policy_findings.extend(findings)
+                if findings:
+                    result.source_status.append(SourceStatus(source_name=f"{record['name']} policy wording",
+                                                             url=record.get("policy_wording_url", ""), ok=True))
+                elif error:
+                    result.guidance.append(f"Plan document: {error}; open the official wording to check "
+                                           "waiting periods and exclusions.")
+            else:
+                result.guidance.append(f"I couldn't match '{query.plan}' to a registered {query.insurer} product. "
+                                       "Use the exact product name or UIN from your policy schedule.")
+        elif policy_intel.procedure_terms(query.procedure):
+            result.guidance.append("Tell me your exact plan name (from your policy schedule) and I'll open its "
+                                   "official IRDAI policy wording and quote the clauses about this procedure.")
+        return result
+
+
+class RoutedInsurerSource:
+    """Demo mode: fictional insurers -> synthetic fixtures; real insurer names -> RealInsurerSource."""
+
+    def __init__(self, fixture: FixtureInsurerSource, real: RealInsurerSource):
+        self.fixture = fixture
+        self.real = real
+
+    async def research(self, query: InsurerResearchQuery) -> InsurerResearchResult:
+        data = json.loads(self.fixture.path.read_text(encoding="utf-8"))["insurers"]
+        if query.insurer in data:
+            return await self.fixture.research(query)
+        return await self.real.research(query)
+
+
+def build_insurer_source(fixture_mode: bool, fetcher=None) -> InsurerSource:
+    reader = None
+    if fetcher is not None:
+        from app.research.policy_intel import PolicyWordingReader
+        reader = PolicyWordingReader(fetcher)
+    real = RealInsurerSource(wording_reader=reader)
+    return RoutedInsurerSource(FixtureInsurerSource(), real) if fixture_mode else real

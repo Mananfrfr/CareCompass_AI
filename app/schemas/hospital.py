@@ -27,6 +27,30 @@ class HospitalRecord(BaseModel):
     ownership_type: str = "unknown"
     hfr_id: str | None = None
     pmjay_empanelment_id: str | None = None
+    phone: str | None = None
+    care_type: str | None = None
+    beds: int | None = None
+    facilities: list[str] = Field(default_factory=list)
+    distance_km: float | None = None  # from the requested city's centre, when coordinates are known
+    location_note: str | None = None
+    discovery_source: str | None = None
+
+    @property
+    def map_url(self) -> str:
+        """Google Maps link (no API key needed). Coordinates when known, otherwise a name+address search."""
+        from urllib.parse import quote_plus
+        if self.latitude is not None and self.longitude is not None:
+            return f"https://www.google.com/maps/search/?api=1&query={self.latitude:.6f}%2C{self.longitude:.6f}"
+        return "https://www.google.com/maps/search/?api=1&query=" + quote_plus(f"{self.name}, {self.address or self.city}")
+
+    @property
+    def directions_url(self) -> str:
+        from urllib.parse import quote_plus
+        if self.latitude is not None and self.longitude is not None:
+            dest = f"{self.latitude:.6f},{self.longitude:.6f}"
+        else:
+            dest = f"{self.name}, {self.address or self.city}"
+        return "https://www.google.com/maps/dir/?api=1&destination=" + quote_plus(dest)
 
 
 class HospitalResearchQuery(BaseModel):
@@ -81,6 +105,9 @@ class RankedCandidate(BaseModel):
     contextual_tier: str | None = None
     capability_checks: dict[str, bool] = Field(default_factory=dict)
     scoring_version: str = "clinical-v2"
+    # "verified": passed the clinical evidence gate. "lead": real, government/community-listed hospital
+    # whose service still has to be confirmed by phone - shown separately, never as a verified match.
+    match_kind: str = "verified"
 
     @property
     def network_label(self) -> str:

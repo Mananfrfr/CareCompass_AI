@@ -163,3 +163,29 @@ async def test_valid_checkout_and_settlement(monkeypatch):
     provider = StripeTestProvider(httpx.MockTransport(lambda req: httpx.Response(200, json=data)))
     assert (await provider.create("ref"))["id"] == "cs_test_123"
     assert await provider.verified({"checkout": "cs_test_123", "reference": "ref"})
+
+
+async def test_confirmed_expired_unpaid_checkout_is_reissued_once(workflow, research):
+    ctx, provider, payments, message = await prepare(workflow, research)
+    scope = ctx.storage["report_reference:" + message.reference]
+    ctx.storage["report_order:" + scope]["expires"] = time.time() - 1
+    async def verified(order):
+        return False
+    async def definitively_expired(order):
+        return True
+    provider.verified, provider.definitively_expired = verified, definitively_expired
+    ctx.sent.clear()
+    await payments.request(ctx, "buyer")
+    assert provider.created == 2
+    assert sum(isinstance(m, RequestPayment) for m in ctx.sent) == 1
+    # The stale reference can no longer be committed against.
+    assert ctx.storage["report_reference:" + message.reference] is None
+
+
+async def test_request_metadata_matches_fetch_stripe_shape(workflow, research):
+    ctx, provider, payments, message = await prepare(workflow, research)
+    request = next(m for m in ctx.sent if isinstance(m, RequestPayment))
+    stripe = request.metadata["stripe"]
+    assert stripe["ui_mode"] == "embedded" and stripe["checkout_session_id"] == "cs_test_123"
+    assert all(isinstance(v, str) for v in stripe.values())
+    assert request.metadata["service"] == "carecompass_report"

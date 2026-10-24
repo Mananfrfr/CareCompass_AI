@@ -48,13 +48,13 @@ flowchart TD
     I --> Q[Missing-info engine]
     Q -->|ask only what is needed| U
     Q --> P{{parallel typed uAgent messages}}
-    P --> H[Hospital Verification Agent<br/>fixtures or OpenStreetMap + official sites]
-    P --> N[Insurer Research Agent<br/>fixtures or official network lists]
+    P --> H[Hospital Verification Agent<br/>gov catalog + NHP India directory 30k<br/>+ OpenStreetMap Overpass map data]
+    P --> N[Insurer Research Agent<br/>official network lists + IRDAI register<br/>+ official policy wording clauses]
     H --> M[Evidence matching + entity resolution]
     N --> M
     M --> R[Decision rules R1-R10]
     R --> K[Explainable ranking]
-    K --> V[Independent verifier]
+    K --> V[Independent verifier<br/>verified matches vs leads to confirm]
     V --> CARD[Carousel → Detail → Review cards<br/>+ full text fallback]
     CARD -->|approve| X[Action executor<br/>idempotent save]
     X --> DB[(SQLite: cases, evidence,<br/>approvals, executions, audit)]
@@ -96,7 +96,8 @@ python scripts/run_agents.py --init-env      # writes .env with fresh agent seed
 | Chat in the terminal | `python scripts/demo_scenarios.py --interactive` |
 | Measure metrics | `python scripts/benchmark.py --runs 20` |
 | **Start the agents for ASI:One** | `python scripts/run_agents.py` |
-| Live data instead of synthetic | set `CARECOMPASS_DATA_MODE=live` in `.env` |
+| Synthetic demo cities instead of live data | set `CARECOMPASS_DATA_MODE=fixture` in `.env` |
+| Rebuild the India hospital directory | `python scripts/import_nhp_hospitals.py hospital_directory.csv` |
 
 ### Connect to Agentverse and ASI:One (manual, needs your account)
 
@@ -113,7 +114,7 @@ The detailed runbook is in [docs/AGENTVERSE_DEPLOYMENT.md](docs/AGENTVERSE_DEPLO
 See [.env.example](.env.example). The key ones:
 
 - `ASI1_API_KEY`: optional. Without it, CareCompass falls back to its deterministic parser.
-- `CARECOMPASS_DATA_MODE`: `fixture` or `live`.
+- `CARECOMPASS_DATA_MODE`: `live` (default, real data for every Indian city) or `fixture` (synthetic demo cities + real directory elsewhere).
 - `*_SEED`: the agent identities. Keep them secret.
 - `COORDINATOR_CONNECTIVITY`: `mailbox` or `local`.
 - `DATABASE_URL`, `RESEARCH_TIMEOUT_S`, `RESEARCH_MAX_ATTEMPTS`, `ACTION_MAX_ATTEMPTS`, `HTTP_USER_AGENT`.
@@ -122,14 +123,28 @@ See [.env.example](.env.example). The key ones:
 
 | Mode | Hospitals | Insurance | Use |
 |---|---|---|---|
-| `fixture` (default) | 12 **fictional** hospitals (Jaipur, Delhi, Ajmer) | fictional insurers *Demo Shield Insurance* and *Sample Care Health* (the latter has a simulated outage) | Reproducible demo of every path: agreement, conflict, de-listing, branch ambiguity, exclusion, outage, other city, prompt injection |
-| `live` | Real OpenStreetMap data via Nominatim (ODbL, at most 1 request per second, cached). Hospital websites are fetched only where robots.txt allows. | Official network lists imported by the operator from insurer websites ([format](data/insurer_networks/README.md)). Otherwise the result is reported as `SOURCE_UNAVAILABLE`. | Real-world use |
+| `live` (default) | **Every Indian city**: National Health Portal hospital directory (~30,000 government-registered facilities, MoHFW / data.gov.in), state government catalogs, reviewed clinical profiles, and live **OpenStreetMap** map data via the Overpass API. | Real insurers are recognised from the **IRDAI product register** (600+ product identities); the user's plan is matched to its UIN and official policy wording, which is read to quote waiting-period / exclusion clauses for the procedure. Network status comes only from official lists imported by the operator ([format](data/insurer_networks/README.md)); otherwise CareCompass says "not checked" and links the insurer's official site. | Real-world use |
+| `fixture` | 12 **fictional** hospitals for Jaipur, Delhi and Ajmer; the real national directory for every other city (never mixed in one result) | Fictional insurers *Demo Shield Insurance* and *Sample Care Health* use synthetic data; real insurer names use the real-insurer pipeline above | Reproducible demo of every path |
 
-Synthetic data is labelled in every reply, card badge and saved record. Fixture mode **never** returns network data for a real insurer: asking about Star Health in fixture mode gives "not checked".
+Synthetic data is labelled in every reply, card badge and saved record, and real hospitals are never labelled synthetic.
+
+### Verified matches vs. leads to confirm
+
+A hospital is a **verified match** only when a current official source (the hospital's own site or a reviewed clinical profile) confirms the service *and* any required capability (e.g. dialysis, ACL reconstruction). Most hospitals in India do not publish that in machine-readable form, so CareCompass also shows **leads to confirm**: real, government- or map-listed hospitals whose directory entry lists the specialty, whose name indicates it, or which are general / multi-speciality hospitals. Leads get a transparent **lead score** (service evidence, listed facilities, insurer listing, distance, contactability), a phone number, a Google Maps link and directions, and an explicit "call to confirm the department" label. They never receive a CareCompass tier or "high" confidence. If nothing is found inside the city, the search widens once to ~40 km and says so.
 
 ## Implementation status
 
-### Current additions (24 October 2026)
+### India-wide coverage upgrade (24 October 2026, evening)
+
+- **No more empty answers for real cities.** The previous build only had evidence for a few demo hospitals, so "ACL tear in Mumbai" returned nothing. Discovery now covers ~30,000 registered facilities across India (703 districts/towns), plus live OpenStreetMap data, with conservative cross-source de-duplication.
+- **Map replaced:** the fuzzy Nominatim text search (max 40 results, often missing major hospitals) is replaced by an Overpass radius query around the city centre; every option has a Google Maps link, directions and distance from the centre.
+- **Real insurers (Star Health, HDFC ERGO, …):** IRDAI register identity, plan → UIN → official policy wording (live: clauses mentioning the procedure are quoted), official website link, and honest "network not checked" when no official list is imported.
+- **Bug fixes:** an empty shortlist no longer swallows the next message as "Nothing was saved…"; real hospitals found in fixture mode are no longer labelled "synthetic"; `my plan is …` and policy UINs are understood without repeating the insurer; small towns (e.g. Pali, Bhilwara) are recognised from the directory.
+- **Payment step:** RequestPayment metadata now matches Fetch's Stripe example (`ui_mode`, `checkout_session_id`, string values only, `service`); a checkout that Stripe confirms expired *and unpaid* can be re-issued instead of locking the user out forever; "buy/get report" phrasings are recognised.
+- Fixed: the Docker image never copied `data/catalog`, so deployed agents had no government catalog or IRDAI register.
+- Tests: 146 passing locally (payments suite and the new India-coverage suite included; real-uAgent e2e tests not run in this environment).
+
+### Earlier additions (24 October 2026)
 
 - Ask **care brief** after saving for a source-linked preparation checklist with hospital and insurer questions. This uses saved evidence, not a fresh verification or booking.
 - Stale case/version approvals are rejected even after completion; an approval cannot silently change the selected hospital.

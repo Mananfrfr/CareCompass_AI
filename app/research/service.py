@@ -36,8 +36,10 @@ class ResearchClient(Protocol):
 
 def build_sources(settings: Settings) -> tuple[HospitalSource, InsurerSource]:
     fetcher = None if settings.fixture_mode else SafeFetcher(settings.http_user_agent)
+    # Official IRDAI policy wordings are public documents: read them for real insurers in every mode.
+    wording_fetcher = fetcher or SafeFetcher(settings.http_user_agent)
     return (build_hospital_source(settings.fixture_mode, fetcher, settings.live_max_candidates),
-            build_insurer_source(settings.fixture_mode))
+            build_insurer_source(settings.fixture_mode, wording_fetcher))
 
 
 class InProcessResearchClient:

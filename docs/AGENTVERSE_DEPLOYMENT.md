@@ -12,7 +12,7 @@ python scripts/run_agents.py --addresses       # copy these into README "Agents"
 
 Optionally set `ASI1_API_KEY` in `.env` (👤 create it at https://asi1.ai/dashboard/api-keys).
 
-Leave `CARECOMPASS_DATA_MODE=fixture` for the reproducible demo. Switch to `live` for real OpenStreetMap data, and set `HTTP_USER_AGENT` to include a real contact, as the Nominatim policy requires.
+Use `CARECOMPASS_DATA_MODE=live` (default) for real data in every Indian city: the National Health Portal directory, government catalogs, OpenStreetMap (Overpass) and the IRDAI register. Set `HTTP_USER_AGENT` to include a real contact, as the OSM usage policies require. `fixture` keeps the synthetic Jaipur/Delhi demo and uses the real directory for all other cities.
 
 ## 2. Pre-flight
 

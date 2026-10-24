@@ -11,6 +11,10 @@ def care_brief(payload: dict, reference: str) -> str:
               f"Insurer: {payload.get('insurer') or 'not provided'}"]
     for item in items:
         lines += [f"### {item['name']}", f"Address in saved record: {item['address']}",
+                  *( [f"Phone (directory): {item['phone']}"] if item.get("phone") else [] ),
+                  *( [f"Map: {item['map_url']}"] if item.get("map_url") else [] ),
+                  *( ["Status: lead - the department is NOT verified; confirm by phone first"]
+                     if item.get("match_kind") == "lead" else [] ),
                   f"Service evidence: {item['specialty_signal']}; confidence: {item['evidence_confidence']}",
                   "Insurance evidence: " + ", ".join(item["insurance_states"]),
                   "Sources: " + ", ".join(item["source_urls"])]

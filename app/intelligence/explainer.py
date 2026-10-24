@@ -28,8 +28,15 @@ def template_summary(req: CareRequest, candidates: list[RankedCandidate]) -> str
     if not candidates:
         return ""
     top = candidates[0]
-    text = (f"I found {len(candidates)} option(s) for {(req.care_specialty or 'care').replace('_', ' ')} in {req.city}. "
-            f"{top.hospital.name} matches best on the evidence available.")
+    label = (req.care_specialty or "care").replace("_", " ")
+    verified_n = sum(1 for c in candidates if c.match_kind != "lead")
+    if verified_n:
+        text = (f"I found {len(candidates)} option(s) for {label} in {req.city}; {verified_n} passed the verified "
+                f"evidence checks. {top.hospital.name} matches best on the evidence available.")
+    else:
+        text = (f"I found {len(candidates)} real, publicly listed hospital(s) in or near {req.city} that are good first "
+                f"calls for {label}. None has a current official page confirming the department yet, so please call "
+                f"to confirm before visiting - {top.hospital.name} is the strongest lead.")
     if req.insurance_provider:
         states = [s.value for c in candidates for s in c.insurance_states]
         verified = sum(1 for c in candidates if "NETWORK_VERIFIED" in [s.value for s in c.insurance_states])
@@ -48,7 +55,10 @@ async def summarize(asi1: ASI1Client | None, req: CareRequest, candidates: list[
         return fallback, "template"
     facts = {
         "need": req.care_specialty, "city": req.city, "insurer": req.insurance_provider,
-        "hospitals": [{"name": c.hospital.name, "service_evidence": c.specialty_signal,
+        "note": "Hospitals with match_kind 'lead' are real listed hospitals whose department is NOT verified; "
+                "tell the user to call to confirm.",
+        "hospitals": [{"name": c.hospital.name, "service_evidence": c.specialty_signal, "match_kind": c.match_kind,
+                       "distance_km": c.hospital.distance_km,
                        "insurance": [STATE_TEXT[s] for s in c.insurance_states],
                        "evidence_confidence": c.evidence_confidence} for c in candidates],
     }

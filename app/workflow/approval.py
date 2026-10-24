@@ -20,6 +20,7 @@ def build_payload(case_id: str, version: int, req: CareRequest, data_mode: str,
             insurance_states=[s.value for s in c.insurance_states], evidence_confidence=c.evidence_confidence,
             suitability_score=c.suitability_score, evidence_ids=[e.evidence_id for e in c.evidence],
             source_urls=sorted({e.source_url for e in c.evidence}), synthetic=c.hospital.synthetic,
+            match_kind=c.match_kind, phone=c.hospital.phone, map_url=c.hospital.map_url,
         ))
     return ShortlistPayload(case_id=case_id, version=version, specialty=req.care_specialty or "", city=req.city or "",
                             insurer=req.insurance_provider, plan=req.insurance_plan, data_mode=data_mode,

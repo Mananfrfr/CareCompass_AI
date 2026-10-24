@@ -34,7 +34,7 @@ STATE_TEXT: dict[InsuranceState, str] = {
     InsuranceState.WAITING_PERIOD_APPLIES: "Plan document lists a waiting period for this procedure",
     InsuranceState.CASHLESS_LISTED: "Directory lists cashless facility (approval still needed per claim)",
     InsuranceState.CASHLESS_NOT_CONFIRMED: "Cashless facility not confirmed",
-    InsuranceState.SOURCE_UNAVAILABLE: "Insurer source unavailable - not checked",
+    InsuranceState.SOURCE_UNAVAILABLE: "Network not checked (no usable official list) - not an out-of-network result",
     InsuranceState.NOT_CHECKED: "No insurance check requested",
 }
 
@@ -84,6 +84,11 @@ class InsurerResearchResult(BaseModel):
     known_plans: list[str] = Field(default_factory=list)
     source_status: list[SourceStatus] = Field(default_factory=list)
     data_mode: str = "fixture"
+    # Real-insurer guidance when no machine-readable network list exists (live / directory mode).
+    official_links: list[dict[str, str]] = Field(default_factory=list)      # {label, url}
+    registered_products: list[dict[str, str]] = Field(default_factory=list)  # IRDAI register identities
+    matched_plan: dict[str, str] | None = None
+    guidance: list[str] = Field(default_factory=list)
 
     @property
     def any_source_ok(self) -> bool:
