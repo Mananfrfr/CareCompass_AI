@@ -157,11 +157,11 @@ Each status means only what it says.
 | PDF report via ResourceContent URL | ✅ (SSRF-guarded download + pypdf) | ✅ extraction | ❌ ASI:One attachment URL format not yet observed | ❌ |
 | Image report OCR | ❌ not implemented (asks user to paste text) | — | — | — |
 | Approval → idempotent save → read-back verify → ID | ✅ | ✅ incl. DB failure + duplicates | n/a | ✅ CC-9DVGJS5A; one record after repeated approval |
-| External inquiry / booking / payments | ❌ not implemented (see [LIMITATIONS](docs/LIMITATIONS.md)) | — | — | — |
+| External inquiry / booking | ❌ not implemented (see [LIMITATIONS](docs/LIMITATIONS.md)) | — | — | — |
 
 ## Latest verification (2026-10-23)
 
-The current code passes **89 tests**, including a real three-agent ACP journey. Regression tests cover emergency interruption during approval, ambiguous consent, and specialty keyword false positives. The coordinator mailbox is connected on Agentverse. A synthetic ASI:One conversation completed the carousel, detail, review, approval and duplicate-approval flow. The saved reference `CC-9DVGJS5A` matched SQLite, with exactly one saved shortlist. ASI:One prefixes callbacks with the recipient mention; the transport now removes only its own exact address before parsing. Earlier measurements below describe the initial build.
+The earlier 23 October build passed **89 tests**, including a real three-agent ACP journey. Regression tests cover emergency interruption during approval, ambiguous consent, and specialty keyword false positives. The coordinator mailbox is connected on Agentverse. A synthetic ASI:One conversation completed the carousel, detail, review, approval and duplicate-approval flow. The saved reference `CC-9DVGJS5A` matched SQLite, with exactly one saved shortlist. ASI:One prefixes callbacks with the recipient mention; the transport now removes only its own exact address before parsing. Earlier measurements below describe the initial build.
 
 ## Measured results
 
@@ -216,8 +216,14 @@ The honest list is in [docs/LIMITATIONS.md](docs/LIMITATIONS.md). Planned next s
 - travel-time ranking,
 - verified cost estimates,
 - plan-document extraction,
-- Payment Protocol, if a real paid service, such as a concierge callback, is added.
+- Validate the optional Payment Protocol sandbox in a supported checkout UI before any production rollout.
 
 ## License
 
 MIT. Synthetic data is fictional. OpenStreetMap data is © OpenStreetMap contributors under ODbL.
+
+### Final verification, 24 October 2026
+
+**121 automated tests passed**, including isolated real ACP subprocesses; **1 live OpenStreetMap test passed** separately. The coordinator publishes both AgentChatProtocol and AgentPaymentProtocol. Payment checkout is a disabled Stripe-test-only prototype, not a live paid service. New fixes validate checkout responses, fail closed on malformed settlement, and reconcile expired orders without automatically offering a second checkout. Free `care brief` uses the saved evidence.
+
+[Submission pack](docs/SUBMISSION_READY.md) | [Captioned demo video](docs/demo/CareCompass-demo.mp4) | [Payment limitations](docs/PAYMENTS.md). The video is a 3:12 edited walkthrough of actual screenshots, not a continuous recording.

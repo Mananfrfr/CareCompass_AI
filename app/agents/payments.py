@@ -7,6 +7,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import math
 import os
 import time
 from decimal import Decimal, InvalidOperation
@@ -49,7 +50,16 @@ class StripeTestProvider:
             response = await client.post("https://api.stripe.com/v1/checkout/sessions", data=fields,
                 headers={"Authorization": f"Bearer {self.secret}", "Idempotency-Key": reference})
             response.raise_for_status()
-            return response.json()
+            data = response.json()
+        checkout = data.get("id", "") if isinstance(data, dict) else ""
+        expiry = data.get("expires_at") if isinstance(data, dict) else None
+        if not (isinstance(checkout, str) and checkout.startswith("cs_test_")
+                and checkout.replace("_", "").isalnum() and data.get("livemode") is False
+                and isinstance(data.get("client_secret"), str)
+                and data["client_secret"].startswith(checkout + "_secret_")
+                and isinstance(expiry, (int, float)) and math.isfinite(expiry) and expiry > time.time()):
+            raise ValueError("Invalid test checkout response")
+        return data
 
     async def verified(self, order: dict):
         if not self.configured:
@@ -62,6 +72,8 @@ class StripeTestProvider:
                 headers={"Authorization": f"Bearer {self.secret}"})
             response.raise_for_status()
             data = response.json()
+        if not isinstance(data, dict) or not isinstance(data.get("metadata"), dict):
+            return False
         return (data.get("id") == checkout and data.get("livemode") is False
                 and data.get("status") == "complete" and data.get("payment_status") == "paid"
                 and data.get("amount_total") == 100 and data.get("currency") == "usd"
@@ -110,9 +122,31 @@ class ReportPayments:
             if order and order.get("completed"):
                 await self.send_text(ctx, sender, expanded_report(json.loads(row.payload_json), row.confirmation_id))
                 return
-            if not order or order["expires"] <= time.time():
+            if order and order["expires"] <= time.time():
+                # A checkout can have settled without its commit reaching this agent.
+                # Never replace it automatically and ask the user to pay twice.
+                try:
+                    settled = await self.provider.verified(order)
+                except (httpx.HTTPError, ValueError, KeyError):
+                    settled = False
+                if settled:
+                    order["completed"] = True
+                    ctx.storage.set("report_order:" + scope, order)
+                    await self.send_text(ctx, sender, "TEST payment verified. " + expanded_report(
+                        json.loads(row.payload_json), row.confirmation_id))
+                else:
+                    await self.send_text(ctx, sender, "This test checkout expired or could not be reconciled. "
+                        "No replacement checkout was created. Do not pay again; contact the operator. "
+                        "Your free **care brief** remains available.")
+                return
+            if not order:
                 reference = "report_" + uuid4().hex
-                checkout = await self.provider.create(reference)
+                try:
+                    checkout = await self.provider.create(reference)
+                except (httpx.HTTPError, ValueError, KeyError):
+                    await self.send_text(ctx, sender, "The test checkout service is unavailable. No payment "
+                        "request was sent. Your saved shortlist and free **care brief** are still available.")
+                    return
                 order = {"reference": reference, "checkout": checkout["id"], "client_secret": checkout["client_secret"],
                          "owner": session_key(sender), "session": str(ctx.session), "expires": checkout["expires_at"],
                          "saved_reference": row.confirmation_id, "completed": False}

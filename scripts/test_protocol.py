@@ -39,7 +39,6 @@ from uagents_core.contrib.protocols.chat import (  # noqa: E402
 
 from app.agents.common import address_from_seed  # noqa: E402
 
-CLIENT_PORT = 8010
 STEPS = [
     ("request", "I have an ACL tear. I live in Jaipur and have Demo Shield insurance. Help me find a suitable hospital."),
     ("select", '{"action": "select_hospital", "hospital_id": "syn-jpr-aravali"}'),
@@ -60,18 +59,29 @@ def wait_port(port: int, timeout: float = 40) -> bool:
 
 
 def main() -> int:
+    # Allocate a separate port set so tests never talk to a running demo agent.
+    reservations = [socket.socket() for _ in range(4)]
+    try:
+        for sock in reservations:
+            sock.bind(("127.0.0.1", 0))
+        coordinator_port, hospital_port, insurer_port, client_port = [s.getsockname()[1] for s in reservations]
+    finally:
+        for sock in reservations:
+            sock.close()
     seeds = {k: f"cc-test-{k.lower()}-{secrets.token_hex(16)}" for k in ("COORDINATOR_SEED", "HOSPITAL_AGENT_SEED", "INSURER_AGENT_SEED")}
     client_seed = f"cc-test-client-{secrets.token_hex(16)}"
     client_address = address_from_seed(client_seed)
     db = Path(tempfile.gettempdir()) / f"carecompass_protocol_{secrets.token_hex(4)}.db"
     env = dict(os.environ, **seeds, PYTHONUNBUFFERED="1", PYTHONUTF8="1", COORDINATOR_CONNECTIVITY="local",
                CARECOMPASS_DATA_MODE="fixture", DATABASE_URL=f"sqlite:///{db.as_posix()}",
-               CARECOMPASS_EXTRA_ROUTES=f"{client_address}=http://127.0.0.1:{CLIENT_PORT}/submit", ASI1_API_KEY="")
-    logs = Path(tempfile.gettempdir()) / "carecompass_protocol_logs"
+               CARECOMPASS_EXTRA_ROUTES=f"{client_address}=http://127.0.0.1:{client_port}/submit", ASI1_API_KEY="",
+               COORDINATOR_PORT=str(coordinator_port), HOSPITAL_AGENT_PORT=str(hospital_port),
+               INSURER_AGENT_PORT=str(insurer_port), CARECOMPASS_PAYMENTS="disabled")
+    logs = Path(tempfile.mkdtemp(prefix="carecompass_protocol_logs_"))
     logs.mkdir(exist_ok=True)
     procs = []
-    for name, module, port in (("hospital", "app.agents.hospital_agent", 8001), ("insurer", "app.agents.insurer_agent", 8002),
-                               ("coordinator", "app.agents.coordinator", 8000)):
+    for name, module, port in (("hospital", "app.agents.hospital_agent", hospital_port), ("insurer", "app.agents.insurer_agent", insurer_port),
+                               ("coordinator", "app.agents.coordinator", coordinator_port)):
         log = open(logs / f"{name}.log", "w", encoding="utf-8")
         procs.append((subprocess.Popen([sys.executable, "-m", module], cwd=ROOT, env=env, stdout=log,
                                        stderr=subprocess.STDOUT), log))
@@ -82,7 +92,7 @@ def main() -> int:
             return 2
     coordinator = address_from_seed(seeds["COORDINATOR_SEED"])
     try:
-        report = asyncio.run(run_client(client_seed, coordinator))
+        report = asyncio.run(run_client(client_seed, coordinator, coordinator_port, client_port))
     finally:
         for p, log in procs:
             p.terminate()
@@ -123,12 +133,12 @@ def _db_checks(report: dict, db: Path) -> None:
     report["checks"]["action_verified_in_db"] = execs == [("succeeded", 1)]
 
 
-async def run_client(client_seed: str, coordinator: str) -> dict:
+async def run_client(client_seed: str, coordinator: str, coordinator_port: int, client_port: int) -> dict:
     inbox: asyncio.Queue = asyncio.Queue()
     acks: set[str] = set()
-    client = Agent(name="carecompass-test-client", seed=client_seed, port=CLIENT_PORT,
-                   endpoint=[f"http://127.0.0.1:{CLIENT_PORT}/submit"],
-                   resolve=RulesBasedResolver({coordinator: "http://127.0.0.1:8000/submit"}),
+    client = Agent(name="carecompass-test-client", seed=client_seed, port=client_port,
+                   endpoint=[f"http://127.0.0.1:{client_port}/submit"],
+                   resolve=RulesBasedResolver({coordinator: f"http://127.0.0.1:{coordinator_port}/submit"}),
                    publish_agent_details=False, enable_agent_inspector=False)
     report: dict = {"started": datetime.now(timezone.utc).isoformat(), "coordinator": coordinator, "steps": [],
                     "checks": {}, "latencies": {}}

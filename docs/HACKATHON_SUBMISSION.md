@@ -34,7 +34,7 @@ It never says a treatment is "covered". Network listing, plan exclusions and cas
 - **Reliability:** bounded retries, idempotent actions, a read-after-write check, SOURCE_UNAVAILABLE semantics and an explicit state machine.
 - **Real-time data:** live mode queries OpenStreetMap and hospitals' own websites, with provenance.
 - **Continued operation:** Dockerfile, a SQLAlchemy URL for PostgreSQL, and a pluggable official insurer data import.
-- **Payment Protocol:** deliberately *not* used, because there is no genuine paid transaction yet (see LIMITATIONS).
+- **Payment Protocol:** seller protocol implemented and published; Stripe test mode only, disabled without configuration. No real checkout demonstrated; see PAYMENTS.md.
 
 ## Submission checklist (fill on event day — do not invent values)
 
@@ -69,3 +69,7 @@ It never says a treatment is "covered". Network listing, plan exclusions and cas
 - Test conversation (signed-in access; not yet a verified public share URL): https://asi1.ai/chat/fd168176-1064-4e3e-8438-86c4c1f7ec61
 - On 2026-10-24, the configured ASI1 key completed a live structured extraction call (one API call, zero failures). The sample needed no model-added fields, so its extraction label stayed `rules`. Agents restarted with `ASI1: configured`; runtime also logged a successful API response. The initial card demo used the deterministic fallback.
 - Data mode remains synthetic fixture data. No real insurer network list is imported.
+
+## Final verification on 24 October
+
+121 automated tests and a separate live OpenStreetMap test passed. See [the current submission pack](SUBMISSION_READY.md) for current links, the captioned video and precise payment limitations. The earlier records above remain historical evidence.

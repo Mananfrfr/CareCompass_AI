@@ -34,6 +34,9 @@ condition, or paste the key lines of a medical report, plus your city (and insur
 - **Demo mode** uses clearly labelled *synthetic* hospitals and fictional insurers ("Demo Shield Insurance", "Sample Care Health"), so the full workflow can be shown reproducibly.
 - **Live mode** uses OpenStreetMap (ODbL), hospitals' own websites, and official insurer network lists imported by the operator.
 
-Commands: `new search`, `retry`, `show CC-XXXXXXXX`, `delete my data`.
+Commands: `new search`, `retry`, `show CC-XXXXXXXX`, `care brief`, `care brief CC-XXXXXXXX`, `delete my data`.
+
+**Free care brief:** after saving, get hospital/insurer questions and the saved source links.
+**Optional payment prototype:** `buy preparation report` explains availability. Checkout is disabled unless Stripe test mode is configured; no real payments or booking are offered.
 
 _CareCompass helps you navigate care. It does not diagnose and does not guarantee insurance coverage. Confirm with the hospital and your insurer before treatment. In an emergency, call 112._

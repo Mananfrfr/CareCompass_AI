@@ -1,0 +1,33 @@
+{
+  "checked_at": "2026-10-24T08:44:12.129398+00:00",
+  "synthetic": true,
+  "confirmation_id": "CC-WNKJ2E3N",
+  "case_id": "case_4713725874f44b4f",
+  "agent_tasks": [
+    {
+      "agent": "hospital-agent",
+      "status": "succeeded",
+      "attempts": 1
+    },
+    {
+      "agent": "insurer-agent",
+      "status": "succeeded",
+      "attempts": 1
+    }
+  ],
+  "actions": [
+    {
+      "status": "succeeded",
+      "verified": 1
+    }
+  ],
+  "automated_tests_passed": 121,
+  "live_tests_passed": 1,
+  "payment_mode": "disabled; provider tested with mocks only",
+  "manifests_published": [
+    "AgentChatProtocol",
+    "AgentPaymentProtocol"
+  ],
+  "care_brief_verified_in_asi_one": true,
+  "disabled_payment_response_verified_in_asi_one": true
+}

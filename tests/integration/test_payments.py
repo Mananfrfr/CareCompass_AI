@@ -99,3 +99,67 @@ def test_live_keys_cannot_enable_payments(monkeypatch):
     monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_live_example")
     monkeypatch.setenv("STRIPE_PUBLISHABLE_KEY", "pk_live_example")
     assert not StripeTestProvider().configured
+
+
+async def test_checkout_failure_preserves_free_workflow(workflow, research):
+    ctx, provider, payments, message = await prepare(workflow, research)
+    ctx.storage.clear()
+    ctx.sent.clear()
+    async def unavailable(reference):
+        raise httpx.ConnectError("offline")
+    provider.create = unavailable
+    await payments.request(ctx, "buyer")
+    assert not any(isinstance(m, RequestPayment) for m in ctx.sent)
+    assert "free **care brief**" in ctx.sent[-1]
+    assert not ctx.storage
+
+
+@pytest.mark.parametrize("paid", [True, False])
+async def test_expired_order_never_creates_second_checkout(workflow, research, paid):
+    ctx, provider, payments, message = await prepare(workflow, research)
+    scope = ctx.storage["report_reference:" + message.reference]
+    ctx.storage["report_order:" + scope]["expires"] = time.time() - 1
+    async def verified(order):
+        return paid
+    provider.verified = verified
+    ctx.sent.clear()
+    await payments.request(ctx, "buyer")
+    assert provider.created == 1
+    assert not any(isinstance(m, RequestPayment) for m in ctx.sent)
+    assert ("TEST payment verified" if paid else "Do not pay again") in ctx.sent[-1]
+
+
+@pytest.mark.parametrize("data", [[], {"metadata": None}, {"metadata": []}])
+async def test_malformed_settlement_fails_closed(monkeypatch, data):
+    monkeypatch.setenv("CARECOMPASS_PAYMENTS", "stripe_test")
+    monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_example")
+    monkeypatch.setenv("STRIPE_PUBLISHABLE_KEY", "pk_test_example")
+    provider = StripeTestProvider(httpx.MockTransport(lambda req: httpx.Response(200, json=data)))
+    assert not await provider.verified({"checkout": "cs_test_123", "reference": "ref"})
+
+
+@pytest.mark.parametrize("field,value", [("livemode", True), ("id", "cs_live_123"),
+    ("client_secret", None), ("expires_at", 0)])
+async def test_invalid_checkout_is_not_offered(monkeypatch, field, value):
+    monkeypatch.setenv("CARECOMPASS_PAYMENTS", "stripe_test")
+    monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_example")
+    monkeypatch.setenv("STRIPE_PUBLISHABLE_KEY", "pk_test_example")
+    data = {"id": "cs_test_123", "client_secret": "cs_test_123_secret_example",
+            "livemode": False, "expires_at": int(time.time()) + 1800}
+    data[field] = value
+    provider = StripeTestProvider(httpx.MockTransport(lambda req: httpx.Response(200, json=data)))
+    with pytest.raises(ValueError):
+        await provider.create("ref")
+
+
+async def test_valid_checkout_and_settlement(monkeypatch):
+    monkeypatch.setenv("CARECOMPASS_PAYMENTS", "stripe_test")
+    monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_example")
+    monkeypatch.setenv("STRIPE_PUBLISHABLE_KEY", "pk_test_example")
+    data = {"id": "cs_test_123", "client_secret": "cs_test_123_secret_example",
+            "livemode": False, "expires_at": int(time.time()) + 1800,
+            "status": "complete", "payment_status": "paid", "amount_total": 100,
+            "currency": "usd", "metadata": {"reference": "ref", "service": "carecompass_report"}}
+    provider = StripeTestProvider(httpx.MockTransport(lambda req: httpx.Response(200, json=data)))
+    assert (await provider.create("ref"))["id"] == "cs_test_123"
+    assert await provider.verified({"checkout": "cs_test_123", "reference": "ref"})

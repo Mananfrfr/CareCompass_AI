@@ -1,3 +1,7 @@
+# Latest local verification ? 24 October 2026
+
+This checkout is `D:/CareCompass_AI-main/CareCompass_AI-main`, with Git metadata. Integrated upstream `972f190` and retained earlier unpushed artifacts in a named stash. Current suite: 121 passed, 1 live test deselected; separate live test: 1 passed. Tests now allocate isolated ports and do not collide with the running demo. Payment fixes validate checkout responses, fail closed on malformed settlement, recover provider failure, and prevent automatic second checkout after expiry. Agent storage files are ignored. Both protocol manifests published after restart. No Stripe test credentials are configured locally; actual checkout remains unverified. See SUBMISSION_READY.md for current deliverables. Earlier laptop-specific statements below are history, not current instructions.
+
 # Recovered handoff — 24 October 2026
 
 ## Current checkpoint (read first)

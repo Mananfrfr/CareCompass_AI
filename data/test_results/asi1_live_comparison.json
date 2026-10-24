@@ -1,0 +1,12 @@
+{
+  "checked_at": "2026-10-24T03:03:53.994440+00:00",
+  "synthetic_input": "Synthetic example: my doctor wrote lateral epicondylitis. I live in Jaipur and have Demo Shield insurance.",
+  "rules_specialty": null,
+  "assisted_specialty": "orthopaedics",
+  "extraction_method": "rules+asi1",
+  "condition": "lateral epicondylitis",
+  "api_calls": 1,
+  "api_failures": 0,
+  "meaningful_contribution": true,
+  "scope": "Extraction only; no insurance or hospital claims are supplied by this test."
+}

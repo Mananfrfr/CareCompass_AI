@@ -8,6 +8,6 @@
 6. **Care knowledge is curated, not comprehensive.** About 25 conditions and 11 symptom groups are mapped. Anything else depends on ASI1, if configured, or a clarifying question.
 7. **Emergency detection is pattern-based and conservative.** It can over-trigger, which is acceptable. It cannot catch every emergency phrasing, so the disclaimer and 112 guidance stay visible.
 8. **Ranking weights are product choices**, not validated clinical-quality measures. The score shows evidence fit, not hospital quality.
-9. **No appointments, inquiries or payments.** The only action is saving the approved shortlist with its evidence. Booking would need a real provider API; Payment Protocol would need a genuine paid service.
+9. **No appointment or inquiry integration; no live payments.** The optional AgentPaymentProtocol seller is a disabled Stripe-test-only preparation-report prototype. Checkout UI and real sandbox settlement remain unverified; see PAYMENTS.md. The free saved-shortlist and care-brief workflow is available.
 10. **Single-host deployment.** The research agents talk to the coordinator over localhost routes. Multi-host deployment would use public endpoints and Almanac resolution, which is already the resolver fallback.
 11. **SQLite.** This is fine for the MVP. Use PostgreSQL via `DATABASE_URL` for concurrency at scale.

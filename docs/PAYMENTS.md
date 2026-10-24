@@ -33,3 +33,7 @@ Fetch's official Stripe example warns that embedded checkout is supported in the
 Production remains disabled pending seller onboarding, payment UI compatibility, refunds/support, retention/deletion policy for order metadata, reconciliation of paid-but-undelivered orders, taxes/currency/consumer disclosures, and price validation. There is no refund API or live-money mode in this prototype.
 
 References: [Fetch Stripe example](https://innovationlab.fetch.ai/resources/docs/examples/agent-transaction/stripe-horoscope-payment-protocol), [Payment Protocol](https://uagents.fetch.ai/docs/guides/agent-payment-protocol).
+
+## Hardening verified on 24 October
+
+Checkout creation validates a test session ID, test mode, client-secret binding and expiry. Provider failures produce a recoverable message without a payment request. Malformed settlement data fails closed. An expired order is reconciled before any action: a verified paid order delivers its report; otherwise no replacement checkout is created and the user is told not to pay again. `*_data.json` agent storage is git-ignored because it can contain checkout metadata. These paths are covered by mocked-provider tests, not live Stripe transactions.

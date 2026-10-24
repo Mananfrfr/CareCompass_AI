@@ -10,3 +10,4 @@ data/test_results/*.log
 *.egg-info/
 .ruff_cache/
 .handoff-upstream/
+*_data.json

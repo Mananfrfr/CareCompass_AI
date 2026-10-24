@@ -1,0 +1,38 @@
+{
+  "checked_at": "2026-10-24T02:58:48.091499+00:00",
+  "case_id": "case_0bcaaaa515284f3e",
+  "synthetic": true,
+  "chat_url": "https://asi1.ai/chat/fd168176-1064-4e3e-8438-86c4c1f7ec61",
+  "extraction_method": "rules+asi1",
+  "condition": "lateral epicondylitis",
+  "specialty": "orthopaedics",
+  "agent_tasks": [
+    {
+      "agent": "hospital-agent",
+      "status": "succeeded",
+      "attempts": 1,
+      "latency_ms": 19
+    },
+    {
+      "agent": "insurer-agent",
+      "status": "succeeded",
+      "attempts": 1,
+      "latency_ms": 24
+    }
+  ],
+  "shortlists": [
+    {
+      "confirmation_id": "CC-MWBAFGVE",
+      "version": 1
+    }
+  ],
+  "action_executions": [
+    {
+      "status": "succeeded",
+      "verified": 1,
+      "confirmation_id": "CC-MWBAFGVE"
+    }
+  ],
+  "evidence_count": 16,
+  "repeat_approval_same_reference_observed_in_ui": true
+}

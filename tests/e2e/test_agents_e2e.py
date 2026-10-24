@@ -1,6 +1,6 @@
 """Tests 15 & 16: real uAgent processes, real ACP messages, real agent-to-agent research.
 
-Runs scripts/test_protocol.py, which starts the three agents on ports 8000-8002 plus a client on 8010.
+Runs scripts/test_protocol.py, which starts the three agents plus a client on isolated dynamically allocated ports.
 """
 
 from __future__ import annotations
