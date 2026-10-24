@@ -19,6 +19,8 @@ class SourceType(str, Enum):
     OFFICIAL_POLICY_DOCUMENT = "official_policy_document"
     COMMUNITY_DIRECTORY = "community_directory"  # e.g. OpenStreetMap
     SYNTHETIC_FIXTURE = "synthetic_fixture"
+    OFFICIAL_GOVERNMENT = "official_government"
+    OFFICIAL_ACCREDITOR = "official_accreditor"
 
 
 class Reliability(str, Enum):
@@ -37,10 +39,18 @@ class ClaimType(str, Enum):
     POLICY_WAITING_PERIOD = "policy_waiting_period"
     CASHLESS = "cashless"
     PREAUTHORIZATION = "preauthorization"
+    CAPABILITY = "capability"
+    QUALITY = "quality"
+    COST = "cost"
+    TREATMENT_COVERAGE = "treatment_coverage"
 
 
 # Source types that are allowed to back each claim when we call it "verified".
 AUTHORITATIVE_SOURCES: dict[ClaimType, set[SourceType]] = {
+    ClaimType.CAPABILITY: {SourceType.OFFICIAL_HOSPITAL_SITE, SourceType.OFFICIAL_GOVERNMENT, SourceType.SYNTHETIC_FIXTURE},
+    ClaimType.QUALITY: {SourceType.OFFICIAL_ACCREDITOR, SourceType.OFFICIAL_GOVERNMENT, SourceType.SYNTHETIC_FIXTURE},
+    ClaimType.COST: {SourceType.OFFICIAL_HOSPITAL_SITE, SourceType.OFFICIAL_GOVERNMENT, SourceType.SYNTHETIC_FIXTURE},
+    ClaimType.TREATMENT_COVERAGE: {SourceType.OFFICIAL_INSURER_DIRECTORY, SourceType.OFFICIAL_POLICY_DOCUMENT, SourceType.OFFICIAL_GOVERNMENT, SourceType.SYNTHETIC_FIXTURE},
     ClaimType.SPECIALTY: {SourceType.OFFICIAL_HOSPITAL_SITE, SourceType.SYNTHETIC_FIXTURE},
     ClaimType.NETWORK_LISTING: {SourceType.OFFICIAL_INSURER_DIRECTORY, SourceType.SYNTHETIC_FIXTURE},
     ClaimType.NETWORK_ABSENCE: {SourceType.OFFICIAL_INSURER_DIRECTORY, SourceType.SYNTHETIC_FIXTURE},
@@ -66,6 +76,10 @@ class Evidence(BaseModel):
     insurer: str | None = None
     plan: str | None = None
     city: str | None = None
+    valid_until: datetime | None = None
+    scope: str | None = None
+    amount_inr: float | None = Field(default=None, gt=0)
+    cost_unit: str | None = None
 
     def model_post_init(self, __context) -> None:  # noqa: D401
         if not self.evidence_id:

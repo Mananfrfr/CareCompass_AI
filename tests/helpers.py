@@ -21,6 +21,8 @@ def hospital(hid: str, name: str, city: str = "Jaipur", postcode: str | None = "
     ev = [Evidence(claim_type=ClaimType.HOSPITAL_EXISTS, claim_value=name, **common),
           Evidence(claim_type=ClaimType.LOCATION, claim_value=city, **common)]
     ev += [Evidence(claim_type=ClaimType.SPECIALTY, claim_value=s, excerpt=f"{s} dept", **common) for s in specialties]
+    if "orthopaedics" in specialties:
+        ev.append(Evidence(claim_type=ClaimType.CAPABILITY, claim_value="acl_reconstruction", scope="orthopaedics", **common))
     return rec, ev
 
 

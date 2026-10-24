@@ -75,6 +75,10 @@ class FixtureHospitalSource:
             for svc in raw.get("services", []):
                 result.evidence.append(Evidence(claim_type=ClaimType.SPECIALTY, claim_value=svc["specialty"],
                                                 excerpt=svc["excerpt"][:400], **common))
+            for capability in raw.get("capabilities", []):
+                for value in capability["values"]:
+                    result.evidence.append(Evidence(claim_type=ClaimType.CAPABILITY, claim_value=value,
+                                                    scope=capability["scope"], excerpt="Synthetic declared capability", **common))
         result.source_status.append(SourceStatus(source_name=self.name, url="fixture://hospitals", ok=True,
                                                  retrieved_at=retrieved))
         # Keep the most relevant first: hospitals with evidence for the requested specialty.
@@ -235,4 +239,5 @@ def build_hospital_source(fixture_mode: bool, fetcher: SafeFetcher | None = None
     if fixture_mode:
         return FixtureHospitalSource()
     assert fetcher is not None
-    return OSMHospitalSource(fetcher, max_candidates=max_candidates)
+    from app.research.hospital_catalog import CombinedHospitalSource
+    return CombinedHospitalSource(OSMHospitalSource(fetcher, max_candidates=max_candidates))

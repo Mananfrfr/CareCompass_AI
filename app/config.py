@@ -37,10 +37,11 @@ class RankingWeights:
     """Product weights for suitability ranking. Not clinically validated."""
 
     specialty: float = 0.35
-    network: float = 0.25
-    location: float = 0.15
-    evidence: float = 0.15
-    preferences: float = 0.10
+    capability: float = 0.20
+    quality: float = 0.15
+    network: float = 0.15
+    affordability: float = 0.10
+    location: float = 0.05
 
 
 @dataclass(frozen=True)

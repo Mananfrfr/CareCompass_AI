@@ -1,0 +1,170 @@
+{
+  "records": [
+    {
+      "hospital_id": "aiims-nagpur",
+      "name": "AIIMS Nagpur",
+      "city": "Nagpur",
+      "state": "Maharashtra",
+      "branch": "AIIMS Nagpur",
+      "ownership_type": "public",
+      "source_url": "https://aiimsnagpur.edu.in/nephrology-current-available-services",
+      "checked_at": "2026-10-24T09:36:05.446582+00:00",
+      "website": "https://aiimsnagpur.edu.in/nephrology-current-available-services",
+      "evidence": [
+        {
+          "claim_type": "specialty",
+          "claim_value": "nephrology",
+          "subject": "AIIMS Nagpur",
+          "subject_id": "aiims-nagpur",
+          "source_name": "AIIMS Nagpur official department page",
+          "source_url": "https://aiimsnagpur.edu.in/nephrology-current-available-services",
+          "source_type": "official_hospital_site",
+          "excerpt": "Department lists dialysis services and a nephrology outpatient clinic.",
+          "retrieved_at": "2026-10-24T09:36:05.446582+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "dialysis",
+          "subject": "AIIMS Nagpur",
+          "subject_id": "aiims-nagpur",
+          "source_name": "AIIMS Nagpur official department page",
+          "source_url": "https://aiimsnagpur.edu.in/nephrology-current-available-services",
+          "source_type": "official_hospital_site",
+          "excerpt": "Department lists dialysis services and a nephrology outpatient clinic.",
+          "retrieved_at": "2026-10-24T09:36:05.446582+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "nephrology_support",
+          "subject": "AIIMS Nagpur",
+          "subject_id": "aiims-nagpur",
+          "source_name": "AIIMS Nagpur official department page",
+          "source_url": "https://aiimsnagpur.edu.in/nephrology-current-available-services",
+          "source_type": "official_hospital_site",
+          "excerpt": "Department lists dialysis services and a nephrology outpatient clinic.",
+          "retrieved_at": "2026-10-24T09:36:05.446582+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "outpatient_consultation",
+          "subject": "AIIMS Nagpur",
+          "subject_id": "aiims-nagpur",
+          "source_name": "AIIMS Nagpur official department page",
+          "source_url": "https://aiimsnagpur.edu.in/nephrology-current-available-services",
+          "source_type": "official_hospital_site",
+          "excerpt": "Department lists dialysis services and a nephrology outpatient clinic.",
+          "retrieved_at": "2026-10-24T09:36:05.446582+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        },
+        {
+          "claim_type": "specialty",
+          "claim_value": "ophthalmology",
+          "subject": "AIIMS Nagpur",
+          "subject_id": "aiims-nagpur",
+          "source_name": "AIIMS Nagpur official department page",
+          "source_url": "https://aiimsnagpur.edu.in/ophthalmologycurrentlyavailableservices",
+          "source_type": "official_hospital_site",
+          "excerpt": "Department lists cataract surgery by phacoemulsification and SICS.",
+          "retrieved_at": "2026-10-24T09:36:05.704673+00:00",
+          "reliability": "high",
+          "scope": "ophthalmology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "cataract_surgery",
+          "subject": "AIIMS Nagpur",
+          "subject_id": "aiims-nagpur",
+          "source_name": "AIIMS Nagpur official department page",
+          "source_url": "https://aiimsnagpur.edu.in/ophthalmologycurrentlyavailableservices",
+          "source_type": "official_hospital_site",
+          "excerpt": "Department lists cataract surgery by phacoemulsification and SICS.",
+          "retrieved_at": "2026-10-24T09:36:05.704673+00:00",
+          "reliability": "high",
+          "scope": "ophthalmology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "outpatient_consultation",
+          "subject": "AIIMS Nagpur",
+          "subject_id": "aiims-nagpur",
+          "source_name": "AIIMS Nagpur official department page",
+          "source_url": "https://aiimsnagpur.edu.in/ophthalmologycurrentlyavailableservices",
+          "source_type": "official_hospital_site",
+          "excerpt": "Department lists cataract surgery by phacoemulsification and SICS.",
+          "retrieved_at": "2026-10-24T09:36:05.704673+00:00",
+          "reliability": "high",
+          "scope": "ophthalmology"
+        }
+      ]
+    },
+    {
+      "hospital_id": "aiims-bilaspur",
+      "name": "AIIMS Bilaspur",
+      "city": "Bilaspur",
+      "state": "Himachal Pradesh",
+      "branch": "AIIMS Bilaspur",
+      "ownership_type": "public",
+      "source_url": "https://www.aiimsbilaspur.edu.in/node/1961",
+      "checked_at": "2026-10-24T09:36:07.762434+00:00",
+      "website": "https://www.aiimsbilaspur.edu.in/node/1961",
+      "evidence": [
+        {
+          "claim_type": "specialty",
+          "claim_value": "nephrology",
+          "subject": "AIIMS Bilaspur",
+          "subject_id": "aiims-bilaspur",
+          "source_name": "AIIMS Bilaspur official department page",
+          "source_url": "https://www.aiimsbilaspur.edu.in/node/1961",
+          "source_type": "official_hospital_site",
+          "excerpt": "Nephrology page reports an operational dialysis unit.",
+          "retrieved_at": "2026-10-24T09:36:07.762434+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "dialysis",
+          "subject": "AIIMS Bilaspur",
+          "subject_id": "aiims-bilaspur",
+          "source_name": "AIIMS Bilaspur official department page",
+          "source_url": "https://www.aiimsbilaspur.edu.in/node/1961",
+          "source_type": "official_hospital_site",
+          "excerpt": "Nephrology page reports an operational dialysis unit.",
+          "retrieved_at": "2026-10-24T09:36:07.762434+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        },
+        {
+          "claim_type": "capability",
+          "claim_value": "nephrology_support",
+          "subject": "AIIMS Bilaspur",
+          "subject_id": "aiims-bilaspur",
+          "source_name": "AIIMS Bilaspur official department page",
+          "source_url": "https://www.aiimsbilaspur.edu.in/node/1961",
+          "source_type": "official_hospital_site",
+          "excerpt": "Nephrology page reports an operational dialysis unit.",
+          "retrieved_at": "2026-10-24T09:36:07.762434+00:00",
+          "reliability": "high",
+          "scope": "nephrology"
+        }
+      ]
+    }
+  ],
+  "failed_refreshes": [
+    {
+      "url": "https://aiimspatna.edu.in/nephrology",
+      "error": "HTTPStatusError"
+    },
+    {
+      "url": "https://aiimspatna.edu.in/ophthalmology",
+      "error": "HTTPStatusError"
+    }
+  ]
+}

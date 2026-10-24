@@ -6,6 +6,10 @@ This checkout is `D:/CareCompass_AI-main/CareCompass_AI-main`, with Git metadata
 
 ## Current checkpoint (read first)
 
+### Mailbox recovery verified
+
+After a network interruption, the running coordinator repeatedly logged network-unreachable/DNS failures. DNS resolution later succeeded, but the old process remained in the failure loop. Restarted this workspace's agent processes without changing seeds, credentials, firewall or DNS settings. Registration and both protocol manifests succeeded. Sent `care brief CC-5DU34W8M` through the existing ASI:One conversation and observed the correct source-linked care preparation brief arrive; the coordinator logged receipt. This verifies the new feature and restored mailbox round trip. It does not guarantee future uptime if the laptop sleeps or loses its connection. A private screenshot is in `data/runtime/asi-reconnected.png` (not published).
+
 ### Latest implemented milestone
 
 **110 automated tests passed**, including the real three-agent ACP test (1 live test deselected), after the following changes:

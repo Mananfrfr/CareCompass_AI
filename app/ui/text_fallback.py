@@ -40,6 +40,8 @@ def understanding_summary(req: CareRequest) -> str:
         parts.append(f"_{req.specialty_rationale}_")
     if req.city:
         parts.append(f"**City:** {req.city}")
+    if req.budget_inr:
+        parts.append(f"**Budget:** INR {req.budget_inr:,.0f}; unit: {req.budget_unit or 'please specify per session/procedure/consultation'}")
     if req.insurance_provider:
         parts.append(f"**Insurer:** {req.insurance_provider}" + (f" ({req.insurance_plan})" if req.insurance_plan else ""))
     elif req.insurance_declined:
@@ -61,7 +63,7 @@ def shortlist_text(req: CareRequest, candidates: list[RankedCandidate], data_mod
     lines.append(f"**Shortlist - {specialty_label(req.care_specialty)} in {req.city}**")
     for i, c in enumerate(candidates, start=1):
         lines.append(f"\n**{i}. {c.hospital.name}** ({c.hospital.city}) - suitability {c.suitability_score:.0f}/100, "
-                     f"evidence confidence *{c.evidence_confidence}*")
+                     f"CareCompass tier **{c.contextual_tier or 'unrated'}**, evidence confidence *{c.evidence_confidence}*")
         lines.append(f"   - {c.explanation}")
         lines.append(f"   - Insurance: {_states(c)}")
         for conflict in c.conflicts:
@@ -70,6 +72,7 @@ def shortlist_text(req: CareRequest, candidates: list[RankedCandidate], data_mod
             lines.append(f"   - Missing: {c.missing_evidence[0]}")
         urls = sorted({e.source_url for e in c.evidence})[:3]
         lines.append(f"   - Sources: {', '.join(urls)} (checked {c.last_verified})")
+    lines.append("\nTiers are condition-specific CareCompass scores, not official hospital ratings. Unknown factors earn zero points. Fewer than five results means insufficient qualified evidence.")
     for note in source_notes:
         lines.append(f"\n_{note}_")
     lines.append("\nReply with a number (e.g. **1**) to see the evidence, **approve** to save this shortlist, "

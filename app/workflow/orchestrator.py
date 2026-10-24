@@ -40,7 +40,7 @@ from app.workflow.approval import build_payload, payload_hash
 from app.workflow.state_machine import SHORTLIST_STATES, CaseState, can_transition, transition
 
 log = logging.getLogger(__name__)
-SHORTLIST_SIZE = 3
+SHORTLIST_SIZE = 8
 
 RESET = re.compile(r"^\s*(?:reset|start over|new search|restart)\s*[.!]?\s*$", re.I)
 DELETE = re.compile(r"\bdelete (?:my|all)? ?(?:data|information|records?)\b", re.I)
@@ -95,6 +95,10 @@ class CareCompassWorkflow:
             case.request_json = req.model_dump_json()
             self._move(case, CaseState.URGENT_GUIDANCE, trace, flags=safety.flags)
             return [Reply(safety.guidance or "")]
+
+        if text.lower().startswith("policy search "):
+            from app.research.policy_catalog import PolicyCatalog
+            return [Reply(PolicyCatalog().render(text[14:].strip()))]
 
         if HELP.match(text):
             return [Reply(HELP_TEXT)]
@@ -286,7 +290,7 @@ class CareCompassWorkflow:
         if failed:
             notes.append(f"{len(failed)} hospital source(s) could not be reached; results may be incomplete.")
         if h_result.data_mode == "live":
-            notes.append("Hospital data: OpenStreetMap contributors (ODbL) and hospitals' own websites where available.")
+            notes.append("Hospital discovery: government directories, reviewed clinical profiles and OpenStreetMap contributors (ODbL). Clinical tiers require separate treatment evidence.")
         if req.insurance_provider and i_result is not None:
             if not i_result.any_source_ok:
                 reason = i_result.source_status[0].error if i_result.source_status else "unavailable"

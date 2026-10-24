@@ -129,6 +129,8 @@ def rule_extract(text: str, report_text: str | None = None) -> CareRequest:
             req.care_specialty = symptoms[0].specialty
             req.specialty_rationale = symptoms[0].note + " This is a starting point for evaluation, not a diagnosis."
             req.extraction_confidence = 0.7
+    from app.intelligence.clinical_requirements import extract_requirements
+    extract_requirements(req, text)
     return req
 
 

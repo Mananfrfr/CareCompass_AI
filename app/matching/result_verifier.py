@@ -115,6 +115,13 @@ def verify(candidates: list[RankedCandidate], req: CareRequest, known_evidence_i
             c.eligibility = Eligibility.SECONDARY
             downgraded = True
 
+        # Recompute clinical gates and tier after all claim downgrades.
+        from app.matching.clinical_scoring import score_candidate
+        from app.config import RankingWeights
+        if not score_candidate(c, req, RankingWeights()):
+            report.rejected.append((name, "clinical capability gate or minimum evidence score failed"))
+            continue
+
         c.verification_status = VerificationStatus.DOWNGRADED if downgraded else VerificationStatus.PASSED
         c.verification_notes = notes
         seen_ids.add(c.hospital.hospital_id)

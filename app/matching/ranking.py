@@ -15,43 +15,6 @@ from app.schemas.hospital import Eligibility, RankedCandidate
 from app.schemas.input import CareRequest
 from app.schemas.insurance import InsuranceState
 
-SPECIALTY_SCORE = {"verified": 1.0, "directory": 0.6, "weak": 0.35, "none": 0.0}
-
-
-def _network_score(states: list[InsuranceState]) -> float | None:
-    if InsuranceState.NOT_CHECKED in states:
-        return None  # user has no insurance: dimension dropped and weights renormalised
-    if InsuranceState.NETWORK_VERIFIED in states:
-        return 1.0 if InsuranceState.CASHLESS_LISTED in states else 0.85
-    if InsuranceState.SOURCE_UNAVAILABLE in states:
-        return 0.5  # unknown is not the same as out of network
-    if InsuranceState.NETWORK_UNCERTAIN in states:
-        return 0.4
-    if InsuranceState.NETWORK_NOT_FOUND in states:
-        return 0.0
-    return 0.4
-
-
-def _evidence_score(c: RankedCandidate, now: datetime) -> float:
-    if not c.evidence:
-        return 0.0
-    authoritative = sum(1 for e in c.evidence if e.is_authoritative) / len(c.evidence)
-    ages = [(now - e.retrieved_at).days for e in c.evidence]
-    worst = max(ages)
-    freshness = 1.0 if worst <= 90 else 0.7 if worst <= 365 else 0.4
-    independent = len({e.source_type for e in c.evidence if e.claim_type != ClaimType.LOCATION} |
-                      {e.source_name for e in c.evidence})
-    breadth = 1.0 if independent >= 2 else 0.6
-    return round(0.5 * authoritative + 0.3 * freshness + 0.2 * breadth, 3)
-
-
-def _preference_score(c: RankedCandidate, req: CareRequest) -> float:
-    score = 0.5
-    if "cashless" in req.preferences:
-        score = 1.0 if InsuranceState.CASHLESS_LISTED in c.insurance_states else 0.2
-    return score
-
-
 def evidence_confidence(c: RankedCandidate, req: CareRequest) -> str:
     specialty_ok = c.specialty_verified
     network_ok = (InsuranceState.NOT_CHECKED in c.insurance_states
@@ -93,24 +56,21 @@ def explain(c: RankedCandidate, req: CareRequest) -> str:
 
 def rank(candidates: list[RankedCandidate], req: CareRequest, weights: RankingWeights,
          limit: int | None = None, now: datetime | None = None) -> list[RankedCandidate]:
+    from app.matching.clinical_scoring import score_candidate
     now = now or datetime.now(timezone.utc)
-    eligible = [c for c in candidates if c.eligibility != Eligibility.EXCLUDED]
-    for c in eligible:
-        components: dict[str, float | None] = {
-            "specialty": SPECIALTY_SCORE.get(c.specialty_signal, 0.0),
-            "network": _network_score(c.insurance_states),
-            "location": 1.0 if c.location_verified else 0.4,
-            "evidence": _evidence_score(c, now),
-            "preferences": _preference_score(c, req),
-        }
-        active = {k: v for k, v in components.items() if v is not None}
-        total_w = sum(getattr(weights, k) for k in active)
-        c.score_breakdown = {k: round(v, 3) for k, v in active.items()}
-        c.suitability_score = round(100 * sum(getattr(weights, k) * v for k, v in active.items()) / total_w, 1)
+    qualified = []
+    for c in candidates:
+        if c.eligibility == Eligibility.EXCLUDED:
+            continue
+        if not score_candidate(c, req, weights, now):
+            continue
         c.evidence_confidence = evidence_confidence(c, req)
-        c.explanation = explain(c, req)
-    order = {Eligibility.PRIMARY: 0, Eligibility.SECONDARY: 1}
-    eligible.sort(key=lambda c: (order[c.eligibility], -c.suitability_score, c.hospital.name))
-    # Only show secondary options if they still have *some* specialty signal.
-    shown = [c for c in eligible if c.eligibility == Eligibility.PRIMARY or c.specialty_signal != "none"]
-    return shown if limit is None else shown[:limit]
+        if c.conflicts:
+            c.evidence_confidence = "low"
+        c.explanation = explain(c, req) + " " + (
+            "Required treatment capabilities passed the evidence checks. "
+            "Missing or unverified factors earn no points; this is not an official hospital rating."
+        )
+        qualified.append(c)
+    qualified.sort(key=lambda c: (-c.suitability_score, c.hospital.hospital_id))
+    return qualified if limit is None else qualified[:limit]

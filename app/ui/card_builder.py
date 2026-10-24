@@ -83,7 +83,7 @@ def shortlist_card(case_id: str, version: int, req: CareRequest, candidates: lis
             "title": f"{i}. {c.hospital.name}",
             "subtitle": f"{c.hospital.city} · {_specialty_text(c, req)}",
             "badges": badges,
-            "secondary_text": f"Suitability {c.suitability_score:.0f}/100 · verified {c.last_verified or 'n/a'}",
+            "secondary_text": f"CareCompass tier {c.contextual_tier or 'unrated'} · Suitability {c.suitability_score:.0f}/100 · verified {c.last_verified or 'n/a'}",
             "primary_cta": {"label": "View evidence",
                             "selection": {"action": "select_hospital", "hospital_id": c.hospital.hospital_id,
                                           "case_id": case_id, "version": version}},

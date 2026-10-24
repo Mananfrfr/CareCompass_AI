@@ -22,6 +22,11 @@ class HospitalRecord(BaseModel):
     longitude: float | None = None
     aliases: list[str] = Field(default_factory=list)
     synthetic: bool = False
+    state: str | None = None
+    district: str | None = None
+    ownership_type: str = "unknown"
+    hfr_id: str | None = None
+    pmjay_empanelment_id: str | None = None
 
 
 class HospitalResearchQuery(BaseModel):
@@ -73,6 +78,9 @@ class RankedCandidate(BaseModel):
     verification_status: VerificationStatus = VerificationStatus.PENDING
     verification_notes: list[str] = Field(default_factory=list)
     last_verified: str | None = None
+    contextual_tier: str | None = None
+    capability_checks: dict[str, bool] = Field(default_factory=dict)
+    scoring_version: str = "clinical-v2"
 
     @property
     def network_label(self) -> str:

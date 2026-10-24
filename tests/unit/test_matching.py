@@ -90,7 +90,7 @@ def test_05_insurer_unavailable_is_not_out_of_network():
     assert c.insurance_states == [S.SOURCE_UNAVAILABLE]
     assert S.NETWORK_NOT_FOUND not in c.insurance_states
     assert any("NOT an out-of-network" in f for f in c.rule_flags)
-    assert c.score_breakdown["network"] == 0.5  # unknown is neutral, not penalised like "not found"
+    assert c.score_breakdown["network"] == 0  # unknown receives no compatibility points, but remains explicitly unknown
 
 
 def test_not_found_only_when_list_is_complete():
@@ -124,14 +124,13 @@ def test_missing_specialty_is_never_primary():
 def test_community_directory_specialty_is_not_verified():
     hres = hospital_result(hospital("h1", "OSM Ortho", source_type=SourceType.COMMUNITY_DIRECTORY))
     _, _, report = pipeline(request(insurance_provider=None), hres, None)
-    c = report.passed[0]
-    assert c.specialty_verified is False and c.eligibility == Eligibility.SECONDARY
+    assert report.passed == []  # community-only specialty evidence fails the hard gate
 
 
 def test_no_insurance_drops_network_dimension():
     hres = hospital_result(hospital("h1", "Bone Clinic"))
     _, ranked, _ = pipeline(request(insurance_provider=None, insurance_declined=True), hres, None)
-    assert "network" not in ranked[0].score_breakdown
+    assert ranked[0].score_breakdown["network"] == 0
     assert ranked[0].insurance_states == [S.NOT_CHECKED]
 
 
@@ -192,5 +191,5 @@ def test_ranking_weights_are_configurable():
     no_network = replace(RankingWeights(), network=0.0)
     cands = [apply_candidate_rules(c, req) for c in build_candidates(req, hres, ires)]
     ranked2 = rank(cands, req, no_network, now=NOW)
-    assert ranked2[0].score_breakdown["network"] in (0.85, 0.0)
+    assert ranked2[0].score_breakdown["network"] == 0
     assert abs(ranked2[0].suitability_score - ranked2[1].suitability_score) < abs(ranked[0].suitability_score - ranked[1].suitability_score)

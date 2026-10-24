@@ -54,6 +54,10 @@ class CareRequest(BaseModel):
     care_specialty: str | None = None
     specialty_rationale: str | None = None
     related_procedure: str | None = None
+    patient_age: int | None = Field(default=None, ge=0, le=120)
+    budget_inr: float | None = Field(default=None, gt=0)
+    budget_unit: str | None = None  # session | procedure | consultation; never silently interchanged
+    required_capabilities: list[str] = Field(default_factory=list)
     city: str | None = None
     allow_nearby: bool = False
     insurance_provider: str | None = None

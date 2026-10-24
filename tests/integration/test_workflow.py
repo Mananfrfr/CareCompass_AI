@@ -20,7 +20,7 @@ async def test_20_complete_journey(workflow, research):
                               research, msg_id="m1")
     assert r[0].card.kind == "carousel" and state(workflow, s) == CaseState.AWAITING_APPROVAL
     items = json.loads(r[0].card.metadata()["card_payload"])["items"]
-    assert 1 <= len(items) <= 3 and items[0]["primary_cta"]["selection"]["action"] == "select_hospital"
+    assert 1 <= len(items) <= 8 and items[0]["primary_cta"]["selection"]["action"] == "select_hospital"
     hid = items[0]["id"]
     r = await workflow.handle(s, json.dumps(items[0]["primary_cta"]["selection"]), research, msg_id="m2")
     assert r[0].card.kind == "detail"
