@@ -277,7 +277,7 @@ class OverpassHospitalSource:
 
     def __init__(self, fetcher: SafeFetcher, radius_m: int = 15000, max_candidates: int = 25,
                  cache_ttl_s: int = 6 * 3600, centre_lookup=None):
-        self.api_fetcher = SafeFetcher(fetcher.user_agent, timeout_s=max(fetcher.timeout_s, 25), resolver=fetcher.resolver,
+        self.api_fetcher = SafeFetcher(fetcher.user_agent, timeout_s=8, resolver=fetcher.resolver,
                                        transport=fetcher.transport, respect_robots=False, max_attempts=1,
                                        allowed_hosts={"overpass-api.de", "nominatim.openstreetmap.org"})
         self.radius_m = radius_m
@@ -304,7 +304,7 @@ class OverpassHospitalSource:
         if cached and time.time() - cached[0] < self.cache_ttl_s:
             return cached[1]
         around = f"(around:{self.radius_m},{lat:.5f},{lon:.5f})"
-        query = (f'[out:json][timeout:25];(nwr["amenity"="hospital"]{around};nwr["healthcare"="hospital"]{around};'
+        query = (f'[out:json][timeout:8];(nwr["amenity"="hospital"]{around};nwr["healthcare"="hospital"]{around};'
                  f'nwr["amenity"="clinic"]["healthcare:speciality"]{around};);out center tags 400;')
         await self._limiter.wait()
         doc = await self.api_fetcher.fetch(OVERPASS_URL, params={"data": query})
@@ -402,4 +402,4 @@ def build_hospital_source(fixture_mode: bool, fetcher: SafeFetcher | None = None
     from app.research.india_directory import get_directory
     overpass = OverpassHospitalSource(fetcher, max_candidates=min(max_candidates, 25),
                                       centre_lookup=lambda city: get_directory().centroid(city))
-    return CombinedHospitalSource([DirectoryHospitalSource(), overpass])
+    return CombinedHospitalSource([DirectoryHospitalSource()], live_map=overpass)

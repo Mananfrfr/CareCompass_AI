@@ -13,6 +13,7 @@ from __future__ import annotations
 import re
 
 import asyncio
+import hashlib
 import time
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -59,6 +60,7 @@ workflow = CareCompassWorkflow(repo, settings, ASI1Client(settings))
 fetcher = attachment_fetcher(settings.http_user_agent)
 chat_proto = Protocol(spec=chat_protocol_spec)
 _session_locks: dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
+_in_flight: set[tuple[str, str]] = set()
 
 _h_source, _i_source = build_sources(settings)
 LOCAL_RESEARCH = InProcessResearchClient(_h_source, _i_source, timeout_s=40)
@@ -196,10 +198,27 @@ async def on_chat(ctx: Context, sender: str, msg: ChatMessage) -> None:
             await ctx.send(sender, to_chat_message(Reply(WELCOME)))
         return
 
+    key = session_key(sender)
+    # ASI:One re-sends a message it has not had an answer to yet. Answering every copy queues identical
+    # searches behind each other and makes every reply late, so a copy of a message that is already being
+    # handled for this chat is acknowledged and dropped.
+    fingerprint = (key, hashlib.sha256(f"{text}|{bool(report_text)}".encode()).hexdigest())
+    if fingerprint in _in_flight:
+        ctx.logger.info("duplicate of an in-flight message from %s dropped", sender[:16])
+        return
+    _in_flight.add(fingerprint)
+    started_at = time.perf_counter()
+    try:
+        await _handle_chat(ctx, sender, msg, key, text, report_text, notices)
+    finally:
+        _in_flight.discard(fingerprint)
+        ctx.logger.info("replied to %s in %.1fs", sender[:16], time.perf_counter() - started_at)
+
+
+async def _handle_chat(ctx: Context, sender: str, msg: ChatMessage, key: str, text: str, report_text, notices) -> None:
     # One bounded attempt per specialist agent; on failure the in-process fallback answers instead of retrying
     # for minutes while the user waits.
     research = AgentResearchClient(ctx, HOSPITAL_AGENT, INSURER_AGENT, min(settings.research_timeout_s, 25), 1)
-    key = session_key(sender)
     async with _session_locks[key]:
         try:
             if PAYMENT_TRIGGER.fullmatch(text.strip()) and not report_text and not notices:

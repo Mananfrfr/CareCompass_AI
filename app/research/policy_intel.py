@@ -156,7 +156,7 @@ class PolicyWordingReader:
 
     def __init__(self, fetcher):
         from app.research.source_fetcher import SafeFetcher
-        self.fetcher = SafeFetcher(fetcher.user_agent, timeout_s=20, max_bytes=12_000_000, resolver=fetcher.resolver,
+        self.fetcher = SafeFetcher(fetcher.user_agent, timeout_s=10, max_bytes=12_000_000, resolver=fetcher.resolver,
                                    transport=fetcher.transport, respect_robots=False, max_attempts=1,
                                    allowed_hosts={"irdai.gov.in"})
         self._cache: dict[str, str] = {}

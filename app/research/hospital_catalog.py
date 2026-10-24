@@ -87,15 +87,25 @@ def merge_results(base: HospitalResearchResult, extra: HospitalResearchResult) -
 
 
 class CombinedHospitalSource:
-    name = "catalog-directory-and-live-map"
+    """Catalog + directory always; the live map only when they leave the city thin.
 
-    def __init__(self, sources):
+    The live map (Overpass) is slow and often overloaded. Waiting on it for every request made replies
+    arrive after ASI:One had stopped waiting, so it now runs only when fewer than MAP_THRESHOLD usable
+    candidates were found, with a short timeout.
+    """
+
+    name = "catalog-directory-and-live-map"
+    MAP_THRESHOLD = 5
+    MAP_TIMEOUT_S = 8
+
+    def __init__(self, sources, live_map=None):
         self.catalog = CatalogHospitalSource()
         self.sources = sources if isinstance(sources, (list, tuple)) else [sources]
+        self.live_map = live_map
 
-    async def _safe(self, source, query):
+    async def _safe(self, source, query, timeout=SOURCE_TIMEOUT_S):
         try:
-            return await asyncio.wait_for(source.search_hospitals(query), timeout=SOURCE_TIMEOUT_S)
+            return await asyncio.wait_for(source.search_hospitals(query), timeout=timeout)
         except Exception as exc:  # noqa: BLE001 - one source failing must not sink the others
             return HospitalResearchResult(task_id=query.task_id, data_mode="live", source_status=[SourceStatus(
                 source_name=getattr(source, "name", type(source).__name__), ok=False,
@@ -106,6 +116,12 @@ class CombinedHospitalSource:
         extras = await asyncio.gather(*(self._safe(s, query) for s in self.sources))
         for extra in extras:
             merge_results(result, extra)
+        if self.live_map is not None:
+            usable = {e.subject_id for e in result.evidence
+                      if (e.claim_type == ClaimType.SPECIALTY and e.claim_value == query.specialty)
+                      or (e.claim_type == ClaimType.CAPABILITY and e.claim_value == "multispeciality_hospital")}
+            if len(usable) < self.MAP_THRESHOLD:
+                merge_results(result, await self._safe(self.live_map, query, self.MAP_TIMEOUT_S))
         return result
 
 
