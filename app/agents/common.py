@@ -53,6 +53,37 @@ def local_routes(settings: Settings) -> dict[str, str]:
     return routes
 
 
+SEND_TIMEOUT_S = 15
+
+
+def harden_outbound_sends(timeout_s: float = SEND_TIMEOUT_S) -> None:
+    """Give every outbound uAgents HTTP delivery a hard timeout.
+
+    uAgents' Dispenser sends envelopes one at a time through `aiohttp.ClientSession()` with
+    aiohttp's default 5-minute timeout. One stalled delivery (e.g. to an Agentverse endpoint)
+    therefore blocks every later message - chat replies AND research requests - which looks like
+    "the agent is not replying". Bounding each POST keeps the queue moving; a failed delivery is
+    logged and reported as FAILED instead of freezing the agent.
+    """
+    import aiohttp
+    from uagents import communication
+
+    if getattr(communication, "_carecompass_hardened", False):
+        return
+
+    class _BoundedAiohttp:
+        def __getattr__(self, name):
+            return getattr(aiohttp, name)
+
+        @staticmethod
+        def ClientSession(*args, **kwargs):  # noqa: N802 - mirrors aiohttp's API
+            kwargs.setdefault("timeout", aiohttp.ClientTimeout(total=timeout_s, connect=min(5.0, timeout_s)))
+            return aiohttp.ClientSession(*args, **kwargs)
+
+    communication.aiohttp = _BoundedAiohttp()
+    communication._carecompass_hardened = True
+
+
 def configure_logging() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     for handler in logging.getLogger().handlers:

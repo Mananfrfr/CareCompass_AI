@@ -40,7 +40,7 @@ from app.workflow.approval import build_payload, payload_hash
 from app.workflow.state_machine import SHORTLIST_STATES, CaseState, can_transition, transition
 
 log = logging.getLogger(__name__)
-SHORTLIST_SIZE = 8
+SHORTLIST_SIZE = 6
 
 RESET = re.compile(r"^\s*(?:reset|start over|new search|restart)\s*[.!]?\s*$", re.I)
 DELETE = re.compile(r"\bdelete (?:my|all)? ?(?:data|information|records?)\b", re.I)

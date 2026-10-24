@@ -278,7 +278,7 @@ class DirectoryHospitalSource:
 
     name = "nhp-india-hospital-directory"
 
-    def __init__(self, directory: IndiaDirectory | None = None, max_candidates: int = 24):
+    def __init__(self, directory: IndiaDirectory | None = None, max_candidates: int = 15):
         self.directory = directory
         self.max_candidates = max_candidates
 

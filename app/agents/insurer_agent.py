@@ -11,13 +11,14 @@ import asyncio
 
 from uagents import Agent, Context
 
-from app.agents.common import CompositeResolver, address_from_seed, configure_logging, local_routes, require_seed
+from app.agents.common import CompositeResolver, harden_outbound_sends, address_from_seed, configure_logging, local_routes, require_seed
 from app.agents.protocols import InsurerResearchRequest, InsurerResearchResponse, insurer_research_protocol
 from app.config import get_settings
 from app.research.service import build_sources
 from app.schemas.insurance import InsurerResearchQuery
 
 settings = get_settings()
+harden_outbound_sends()
 _, insurer_source = build_sources(settings)
 protocol = insurer_research_protocol()
 COORDINATOR = address_from_seed(settings.coordinator_seed) if settings.coordinator_seed else None

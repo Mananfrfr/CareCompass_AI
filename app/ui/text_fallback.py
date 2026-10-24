@@ -89,16 +89,17 @@ def insurer_notes(req: CareRequest, i_result) -> list[str]:
     return notes
 
 
-def _contact_line(c: RankedCandidate) -> str:
+def _contact_line(c: RankedCandidate, full: bool = False) -> str:
     h = c.hospital
     bits = []
     if h.phone:
         bits.append(f"📞 {h.phone}")
     bits.append(f"[📍 Map]({h.map_url})")
-    bits.append(f"[Directions]({h.directions_url})")
+    if full:
+        bits.append(f"[Directions]({h.directions_url})")
     if h.distance_km is not None:
         bits.append(f"~{h.distance_km:.0f} km from centre")
-    if h.website:
+    if h.website and full:
         bits.append(f"[Website]({h.website})")
     return " · ".join(bits)
 
@@ -118,7 +119,7 @@ def _candidate_lines(i: int, c: RankedCandidate) -> list[str]:
         lines.append(f"   - ⚠️ Conflict: {conflict}")
     if c.hospital.location_note:
         lines.append(f"   - ⚠️ {c.hospital.location_note}")
-    urls = sorted({e.source_url for e in c.evidence})[:3]
+    urls = sorted({e.source_url for e in c.evidence})[:2]
     lines.append(f"   - Sources: {', '.join(urls)} (checked {c.last_verified})")
     return lines
 
@@ -159,7 +160,7 @@ def shortlist_text(req: CareRequest, candidates: list[RankedCandidate], data_mod
 def detail_text(c: RankedCandidate, req: CareRequest) -> str:
     score_label = "Lead score" if c.match_kind == "lead" else "Suitability"
     lines = [f"**{c.hospital.name}**", f"- Address: {c.hospital.address or c.hospital.city}",
-             f"- Contact & map: {_contact_line(c)}",
+             f"- Contact & map: {_contact_line(c, full=True)}",
              f"- Why listed: {c.explanation}",
              f"- Insurance: {_states(c)}",
              f"- {score_label} {c.suitability_score:.0f}/100 ({', '.join(f'{k} {v:.2f}' for k, v in c.score_breakdown.items())}); "

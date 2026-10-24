@@ -31,7 +31,8 @@ from uagents_core.contrib.protocols.chat import (
     chat_protocol_spec,
 )
 
-from app.agents.common import CompositeResolver, address_from_seed, configure_logging, local_routes, require_seed
+from app.agents.common import (CompositeResolver, address_from_seed, configure_logging, harden_outbound_sends,
+                               local_routes, require_seed)
 from app.agents.payments import ReportPayments
 from app.agents.protocols import (
     HospitalResearchRequest,
@@ -44,7 +45,7 @@ from app.database.repository import Repository
 from app.database.session import make_session_factory
 from app.intelligence.asi1_client import ASI1Client
 from app.intelligence.attachments import attachment_fetcher, read_attachment
-from app.research.service import ResearchOutcome
+from app.research.service import InProcessResearchClient, ResearchOutcome, build_sources
 from app.schemas.hospital import HospitalResearchQuery, HospitalResearchResult
 from app.schemas.insurance import InsurerResearchQuery, InsurerResearchResult
 from app.security.privacy import session_key, summarize_for_log
@@ -52,12 +53,15 @@ from app.ui.card_handlers import strip_recipient_mention
 from app.workflow.orchestrator import WELCOME, CareCompassWorkflow, Reply
 
 settings = get_settings()
+harden_outbound_sends()
 repo = Repository(make_session_factory(settings.database_url))
 workflow = CareCompassWorkflow(repo, settings, ASI1Client(settings))
 fetcher = attachment_fetcher(settings.http_user_agent)
 chat_proto = Protocol(spec=chat_protocol_spec)
 _session_locks: dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
 
+_h_source, _i_source = build_sources(settings)
+LOCAL_RESEARCH = InProcessResearchClient(_h_source, _i_source, timeout_s=40)
 HOSPITAL_AGENT = address_from_seed(settings.hospital_agent_seed) if settings.hospital_agent_seed else ""
 INSURER_AGENT = address_from_seed(settings.insurer_agent_seed) if settings.insurer_agent_seed else ""
 
@@ -73,6 +77,21 @@ class AgentResearchClient:
         self.max_attempts = max_attempts
 
     async def _call(self, agent: str, address: str, request, response_type, result_type) -> ResearchOutcome:
+        outcome = await self._call_agent(agent, address, request, response_type, result_type)
+        if outcome.result is not None:
+            return outcome
+        # The specialist agent is unreachable: run the same research code in-process so the user still
+        # gets an answer. Logged and labelled; never a fabricated result.
+        self.ctx.logger.warning("%s unavailable (%s); running research in-process", agent, outcome.error)
+        local = LOCAL_RESEARCH
+        query = (HospitalResearchQuery if agent == "hospital-agent" else InsurerResearchQuery)(
+            **request.model_dump())
+        fallback = await (local.hospitals(query) if agent == "hospital-agent" else local.insurer(query))
+        fallback.agent = f"{agent} (in-process fallback)"
+        fallback.attempts += outcome.attempts
+        return fallback if fallback.result is not None else outcome
+
+    async def _call_agent(self, agent: str, address: str, request, response_type, result_type) -> ResearchOutcome:
         start = time.perf_counter()
         error = "not attempted"
         attempt = 0
@@ -177,8 +196,9 @@ async def on_chat(ctx: Context, sender: str, msg: ChatMessage) -> None:
             await ctx.send(sender, to_chat_message(Reply(WELCOME)))
         return
 
-    research = AgentResearchClient(ctx, HOSPITAL_AGENT, INSURER_AGENT, settings.research_timeout_s,
-                                   settings.research_max_attempts)
+    # One bounded attempt per specialist agent; on failure the in-process fallback answers instead of retrying
+    # for minutes while the user waits.
+    research = AgentResearchClient(ctx, HOSPITAL_AGENT, INSURER_AGENT, min(settings.research_timeout_s, 25), 1)
     key = session_key(sender)
     async with _session_locks[key]:
         try:
@@ -193,7 +213,9 @@ async def on_chat(ctx: Context, sender: str, msg: ChatMessage) -> None:
             replies = [Reply("Sorry - something went wrong on my side and nothing was saved. Please try again, "
                              "or say **new search**.")]
     for reply in replies:
-        await ctx.send(sender, to_chat_message(reply))
+        status = await ctx.send(sender, to_chat_message(reply))
+        if getattr(getattr(status, "status", None), "value", "") == "failed":
+            ctx.logger.error("reply to %s not delivered: %s", sender[:16], getattr(status, "detail", status))
 
 
 @chat_proto.on_message(ChatAcknowledgement)
