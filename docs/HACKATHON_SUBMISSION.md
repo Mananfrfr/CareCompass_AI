@@ -1,6 +1,6 @@
 # Fetch-A-Thon 3.0 submission: CareCompass AI
 
-**Event:** Fetch-A-Thon 3.0, 24 October 2026. Final submission is due at 16:30 IST.
+**Event:** Fetch-A-Thon 3.0, 24 October 2026. The earlier handoff lists a 16:30 IST final-building/submission session; confirm the actual cutoff with the organizers.
 **Challenge:** ASI:One Agent Challenge — From Intent to Action.
 
 ## Short description (for Devpost)
@@ -24,7 +24,7 @@ It never says a treatment is "covered". Network listing, plan exclusions and cas
 | Agent Chat Protocol | `Protocol(spec=chat_protocol_spec)`, `publish_manifest=True`, acknowledgements, multi-turn | ✅ manifest published (log) · ✅ local ACP test 12/12 |
 | Discoverable/usable in ASI:One | Agentverse profile README + keywords (`docs/AGENT_PROFILE.md`) | ✅ profile marked Active / ASI Available |
 | Meaningful tool execution / multi-agent | 3 uAgents with typed protocols. Live OSM data. DB action with read-back verification. | ✅ |
-| Workflow completes inside ASI:One | Cards + text fallback, no external frontend | ✅ synthetic card journey completed; invite link supplied; independent judge access still to verify |
+| Workflow completes inside ASI:One | Cards + text fallback, no external frontend | ✅ synthetic card journey completed; invite link supplied; user reported access from another signed-in account; see docs/HANDOFF.md |
 | Public GitHub repo with instructions | This repository (README, docs, tests) | Public repository exists; deployment fixes included |
 
 ## Bonus criteria addressed
@@ -40,9 +40,9 @@ It never says a treatment is "covered". Network listing, plan exclusions and cas
 
 - [ ] Public GitHub repository URL: https://github.com/Mananfrfr/CareCompass_AI
 - [ ] Agentverse profile URL, coordinator (CareCompass AI): https://agentverse.ai/agents/details/agent1qf4xxsxv47fa6ghqvv7x8s6lhqw66vp52zgldq8w0xyueyd5cnkavhkl4dm/profile
-- [ ] Agentverse profile URL(s), research agents (optional): `______________________`
-- [ ] ASI:One chat invite: https://asi1.ai/invite?channelInviteKey=vOe6V4S_Ep2Y0Q83V34GfIS0SbD5M4VI9jueaWYYwDo (opens the correct demo conversation for the signed-in owner; verify access with another account before submission). This is an invitation, not a verified anonymous read-only transcript.
-- [ ] Demo video (3–5 min, follows `docs/DEMO_SCRIPT.md`): `______________________`
+- [ ] Agentverse profile URL(s), research agents (optional): Pending — see SUBMISSION_READY.md
+- [ ] ASI:One chat invite: https://asi1.ai/invite?channelInviteKey=vOe6V4S_Ep2Y0Q83V34GfIS0SbD5M4VI9jueaWYYwDo (the user reported the full conversation visible from another signed-in account in the shared handoff). This is an invitation, not a verified anonymous read-only transcript.
+- [ ] Demo video (3–5 min, follows `docs/DEMO_SCRIPT.md`): Pending — see SUBMISSION_READY.md
 - [ ] README agent names and addresses match `python scripts/run_agents.py --addresses`
 - [ ] README contains both badges (`innovationlab`, `hackathon`) ✅ already present
 - [ ] `.env` is NOT committed (`git status` shows it ignored)

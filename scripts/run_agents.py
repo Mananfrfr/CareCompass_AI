@@ -50,6 +50,7 @@ def _pump(name: str, proc: subprocess.Popen) -> None:
     assert proc.stdout is not None
     for line in proc.stdout:
         sys.stdout.write(f"[{name}] {line}")
+        sys.stdout.flush()
 
 
 def run(local: bool) -> None:
