@@ -129,6 +129,15 @@ Synthetic data is labelled in every reply, card badge and saved record. Fixture 
 
 ## Implementation status
 
+### Current additions (24 October 2026)
+
+- Ask **care brief** after saving for a source-linked preparation checklist with hospital and insurer questions. This uses saved evidence, not a fresh verification or booking.
+- Stale case/version approvals are rejected even after completion; an approval cannot silently change the selected hospital.
+- Insurer imports reject invalid, future or older-than-30-day retrieval dates and empty/malformed lists.
+- Optional **AgentPaymentProtocol** seller integration: **buy preparation report**. Stripe test mode only, disabled until seller configuration; no real payment or ASI:One checkout has been demonstrated. See [payments and proposed monetization](docs/PAYMENTS.md).
+- Current live-data findings and unresolved postcode discrepancy: [live-data review](docs/LIVE_DATA_REVIEW.md). No permission-confirmed insurer dataset has been imported.
+- Latest continuation state: [handoff](docs/HANDOFF.md). Older verification tables below describe earlier milestones.
+
 Each status means only what it says.
 
 | Capability | Implemented | Tested locally | Tested with live API | Tested inside ASI:One |

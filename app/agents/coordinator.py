@@ -30,6 +30,7 @@ from uagents_core.contrib.protocols.chat import (
 )
 
 from app.agents.common import CompositeResolver, address_from_seed, configure_logging, local_routes, require_seed
+from app.agents.payments import ReportPayments
 from app.agents.protocols import (
     HospitalResearchRequest,
     HospitalResearchResponse,
@@ -119,6 +120,13 @@ def to_chat_message(reply: Reply) -> ChatMessage:
     return ChatMessage(timestamp=datetime.now(timezone.utc), msg_id=uuid4(), content=content)
 
 
+async def _send_payment_text(ctx, sender, text):
+    await ctx.send(sender, to_chat_message(Reply(text)))
+
+
+report_payments = ReportPayments(repo, _send_payment_text)
+
+
 def _resource_urls(item: ResourceContent) -> list[tuple[str, str]]:
     resources = item.resource if isinstance(item.resource, list) else [item.resource]
     out = []
@@ -168,6 +176,10 @@ async def on_chat(ctx: Context, sender: str, msg: ChatMessage) -> None:
     key = session_key(sender)
     async with _session_locks[key]:
         try:
+            if text.strip().lower() == "buy preparation report" and not report_text and not notices:
+                if repo.record_inbound(key, str(msg.msg_id)):
+                    await report_payments.request(ctx, sender)
+                return
             replies = await workflow.handle(key, text, research, msg_id=str(msg.msg_id), report_text=report_text,
                                             notices=notices)
         except Exception as exc:  # noqa: BLE001 - never leave the user without an answer
@@ -203,6 +215,7 @@ def build_agent() -> Agent:
         **kwargs,
     )
     agent.include(chat_proto, publish_manifest=True)
+    agent.include(report_payments.protocol, publish_manifest=True)
 
     @agent.on_event("startup")
     async def _startup(ctx: Context) -> None:

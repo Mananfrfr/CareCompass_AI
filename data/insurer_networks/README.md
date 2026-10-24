@@ -15,6 +15,8 @@ Example Hospital Name,Jaipur,"Street, Area",302017,yes
 
 Rules enforced by the loader (`app/research/insurer_sources.py`):
 - Files without `insurer` and an `https://` `source_url` are ignored.
+- `retrieved_at` must be a valid date no more than 30 days old and not in the future. File modification time is never substituted for source verification. This is an operational freshness limit, not an insurer guarantee.
+- Empty lists and rows missing hospital name or city are rejected; they cannot establish network absence.
 - `complete_for_cities` lists the cities for which the file is the insurer's full list. Absence from
   a complete list becomes `NETWORK_NOT_FOUND`; otherwise absence is only `NETWORK_UNCERTAIN`.
 - A listing proves network membership only, never plan eligibility or claim approval.

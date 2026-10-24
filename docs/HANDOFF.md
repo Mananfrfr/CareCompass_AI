@@ -2,6 +2,19 @@
 
 ## Current checkpoint (read first)
 
+### Latest implemented milestone
+
+**110 automated tests passed**, including the real three-agent ACP test (1 live test deselected), after the following changes:
+
+- Completed approvals now pass through case/version validation. Old selection/review callbacks are also rejected. Approval cannot silently change the selected hospital.
+- Official insurer CSV imports require a real, valid retrieval date within 30 days. Invalid/future/stale dates and empty or malformed lists fail closed. No filesystem timestamp is treated as verification.
+- New free `care brief` command generates preparation questions and source links from the immutable saved shortlist. Cross-session references are rejected and synthetic data is prominently labelled.
+- Added AgentPaymentProtocol seller and Stripe TEST-only verification for `buy preparation report`; disabled without configuration. No seller account exists yet, as confirmed by the user. Test cases cover binding/replay and wrong settlement attributes; no real checkout has occurred. See PAYMENTS.md for the monetization proposal and outstanding production work.
+- Current database confirms one saved shortlist and one duplicate-approval audit event for the fresh ASI:One journey: repeated approval did not create another saved row.
+- User explicitly requested ongoing GitHub pushes. Checkpoints are pushed via the clean `.handoff-upstream` checkout; the workspace root itself remains a downloaded folder without `.git`. Copy only intended public files into that checkout before staging. Never copy `.env`, databases or runtime logs.
+
+Next verification: check the restarted coordinator publishes AgentPaymentProtocol; exercise `care brief` and disabled payment messaging in ASI:One. Seller onboarding and an actual sandbox checkout remain external prerequisites. The duplicate-card runtime cause and production data permissions are unresolved. Do not claim all bonus points are earned.
+
 User priorities now: stop video/slide preparation; fix reliability and credibility issues, add a small useful differentiator, assess/implement Agent Payment Protocol with credible monetization, and push tested milestones to GitHub as work proceeds.
 
 - Agents were started on this laptop with the original seeds. All three ports listen and the coordinator receives ASI:One messages.

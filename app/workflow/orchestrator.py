@@ -47,11 +47,13 @@ DELETE = re.compile(r"\bdelete (?:my|all)? ?(?:data|information|records?)\b", re
 HELP = re.compile(r"^\s*(?:help|\?|what can you do\??)\s*$", re.I)
 RETRY = re.compile(r"^\s*(?:retry|try again)\s*[.!]?\s*$", re.I)
 SHOW = re.compile(r"\bshow\s+(CC-[A-Z0-9]{8})\b", re.I)
+BRIEF = re.compile(r"^care brief(?:\s+(CC-[A-Z0-9]{8}))?[.!]*$", re.I)
 
 WELCOME = ("Hi! I'm **CareCompass**. Tell me your health concern and city - for example *\"I have a kidney stone, "
            "I'm in Delhi and have Star Health insurance\"* - or paste the key lines of a medical report. "
            "I'll research suitable hospitals, check insurer network evidence, and save a verified shortlist when you approve.")
-HELP_TEXT = (WELCOME + "\n\nCommands: **new search**, **retry**, **show CC-XXXXXXXX**, **delete my data**.")
+HELP_TEXT = (WELCOME + "\n\nCommands: **new search**, **retry**, **show CC-XXXXXXXX**, **care brief** "
+             "(preparation checklist for your saved shortlist), **delete my data**.")
 
 
 @dataclass
@@ -104,6 +106,19 @@ class CareCompassWorkflow:
             if case and can_transition(CaseState(case.state), CaseState.CANCELLED):
                 self._move(case, CaseState.CANCELLED, trace, reason="user reset")
             return [Reply("Okay, starting fresh. " + WELCOME)]
+        if m := BRIEF.fullmatch(text):
+            reference = m.group(1)
+            if not reference:
+                last = self.repo.latest_case(session_key)
+                saved = self.repo.shortlists(last.case_id) if last else []
+                reference = saved[-1].confirmation_id if saved else None
+            if not reference:
+                return [Reply("Save a shortlist first, then ask for **care brief**, or **care brief CC-XXXXXXXX**.")]
+            row = self.repo.shortlist_for_session(reference.upper(), session_key)
+            if row is None:
+                return [Reply("I couldn't find that saved reference in this chat.")]
+            from app.ui.care_brief import care_brief
+            return [Reply(care_brief(json.loads(row.payload_json), row.confirmation_id))]
         if m := SHOW.search(text):
             return [self._show_saved(m.group(1).upper(), session_key)]
 
@@ -113,7 +128,7 @@ class CareCompassWorkflow:
             if last and last.state == CaseState.COMPLETED.value:
                 sel = parse_selection(text, self._ids(last))
                 if sel.action == "approve":
-                    return [await self._approve(last, sel, trace)]
+                    return await self._on_selection(last, sel, research, trace)
             case = self.repo.create_case(session_key, "fixture" if self.settings.fixture_mode else "live")
             if last and last.state in (CaseState.CANCELLED.value, CaseState.COMPLETED.value):
                 case.request_json = last.request_json  # continuity: keep city/condition/insurer from this chat
@@ -290,7 +305,10 @@ class CareCompassWorkflow:
     # ------------------------------------------------------------------ selection / approval
     async def _on_selection(self, case: CareCase, sel: Selection, research: ResearchClient, trace: str) -> list[Reply]:
         if sel.case_id and sel.case_id != case.case_id:
+            self.repo.audit(case.case_id, trace, "stale_card_rejected", action=sel.action)
             return [Reply("That card belongs to an earlier search. Here is your current shortlist.", self._shortlist_card(case))]
+        if sel.version is not None and sel.version != case.shortlist_version:
+            return [Reply("That card is for an older version. Please use the current shortlist.", self._shortlist_card(case))]
         req = self._request(case)
         results = self._results(case)
         if sel.action == "select_hospital":
@@ -311,13 +329,9 @@ class CareCompassWorkflow:
             name = self._names(case).get(case.selected_hospital_id or "")
             return [Reply(tf.review_text(payload, name), review_card(payload, name))]
         if sel.action == "approve":
-            if sel.version is not None and sel.version != case.shortlist_version:
-                payload = build_payload(case.case_id, case.shortlist_version, req, case.data_mode, results,
-                                        case.selected_hospital_id)
-                return [Reply("That approval was for an older version of the shortlist. Please review the current one.",
-                              review_card(payload, self._names(case).get(case.selected_hospital_id or "")))]
-            if sel.hospital_id and any(c.hospital.hospital_id == sel.hospital_id for c in results):
-                case.selected_hospital_id = sel.hospital_id
+            if sel.hospital_id and sel.hospital_id != case.selected_hospital_id:
+                return [Reply("That approval changes the hospital choice. Select the hospital and review it first.",
+                              self._shortlist_card(case))]
             return [await self._approve(case, sel, trace)]
         if sel.action == "cancel":
             payload = build_payload(case.case_id, case.shortlist_version, req, case.data_mode, results, case.selected_hospital_id)

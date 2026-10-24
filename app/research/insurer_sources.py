@@ -15,7 +15,7 @@ from __future__ import annotations
 import csv
 import io
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Protocol
 
@@ -151,9 +151,21 @@ class OfficialNetworkFileSource:
         result.insurer_recognized = True
         for header, rows, path in matched:
             try:
-                retrieved = datetime.fromisoformat(header.get("retrieved_at", "")).replace(tzinfo=timezone.utc)
+                retrieved = datetime.fromisoformat(header.get("retrieved_at", ""))
+                retrieved = retrieved.replace(tzinfo=timezone.utc) if retrieved.tzinfo is None else retrieved.astimezone(timezone.utc)
             except ValueError:
-                retrieved = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+                result.source_status.append(SourceStatus(source_name=path.name, url=header["source_url"], ok=False,
+                    error="Missing or invalid source retrieval date; file modification time is not verification evidence."))
+                continue
+            now = datetime.now(timezone.utc)
+            if retrieved > now or now - retrieved > timedelta(days=30):
+                result.source_status.append(SourceStatus(source_name=path.name, url=header["source_url"], ok=False,
+                    error="Source retrieval date is in the future or older than the 30-day import freshness limit."))
+                continue
+            if not rows or any(not (r.get("name") or "").strip() or not (r.get("city") or "").strip() for r in rows):
+                result.source_status.append(SourceStatus(source_name=path.name, url=header["source_url"], ok=False,
+                    error="Empty or malformed network list; cannot infer network absence."))
+                continue
             complete = city in [c.strip() for c in header.get("complete_for_cities", "").split(",")]
             name = f"{query.insurer} official network list ({path.name})"
             result.source_status.append(SourceStatus(source_name=name, url=header["source_url"], ok=True,
