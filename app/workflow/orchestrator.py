@@ -190,6 +190,11 @@ class CareCompassWorkflow:
         if update.insurance_provider and update.insurance_provider != previous.insurance_provider:
             req.insurance_plan = update.insurance_plan  # plan belonged to the old insurer
             req.insurance_declined = False
+        elif update.insurance_declined and not update.insurance_provider:
+            # "no insurance" in this message overrides an insurer remembered from an earlier search in this chat.
+            req.insurance_provider = None
+            req.insurance_plan = None
+            req.insurance_declined = True
         req.case_id = case.case_id
         req.urgency = safety.urgency
         req.urgency_flags = list(dict.fromkeys(req.urgency_flags + safety.flags))

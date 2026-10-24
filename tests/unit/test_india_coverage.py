@@ -186,3 +186,12 @@ async def test_demo_city_still_uses_verified_synthetic_flow(workflow, india_rese
     replies = await workflow.handle("s3", "ACL tear in Jaipur, Demo Shield Insurance", india_research)
     assert "synthetic" in replies[-1].text.lower()
     assert any(c.match_kind == "verified" for c in workflow._results(workflow.repo.latest_case("s3")))
+
+
+async def test_no_insurance_overrides_insurer_from_earlier_search(workflow, india_research):
+    await workflow.handle("s4", "kidney stone in Bengaluru, HDFC ERGO insurance", india_research)
+    await workflow.handle("s4", "new search", india_research)
+    replies = await workflow.handle("s4", "I need cataract surgery in Pune, no insurance", india_research)
+    assert "HDFC ERGO" not in replies[-1].text
+    req = workflow._request(workflow.repo.latest_case("s4"))
+    assert req.insurance_provider is None and req.insurance_declined
