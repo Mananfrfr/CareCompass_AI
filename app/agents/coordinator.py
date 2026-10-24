@@ -61,6 +61,7 @@ fetcher = attachment_fetcher(settings.http_user_agent)
 chat_proto = Protocol(spec=chat_protocol_spec)
 _session_locks: dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
 _in_flight: set[tuple[str, str]] = set()
+_background: set[asyncio.Future] = set()
 
 _h_source, _i_source = build_sources(settings)
 LOCAL_RESEARCH = InProcessResearchClient(_h_source, _i_source, timeout_s=40)
@@ -169,7 +170,12 @@ def _resource_urls(item: ResourceContent) -> list[tuple[str, str]]:
 
 @chat_proto.on_message(ChatMessage)
 async def on_chat(ctx: Context, sender: str, msg: ChatMessage) -> None:
-    await ctx.send(sender, ChatAcknowledgement(timestamp=datetime.now(timezone.utc), acknowledged_msg_id=msg.msg_id))
+    # Acknowledge without waiting for ASI:One to confirm delivery (that round trip took seconds and delayed
+    # the actual answer). The task is kept referenced until it finishes.
+    ack = asyncio.ensure_future(ctx.send(sender, ChatAcknowledgement(timestamp=datetime.now(timezone.utc),
+                                                                     acknowledged_msg_id=msg.msg_id)))
+    _background.add(ack)
+    ack.add_done_callback(_background.discard)
     texts: list[str] = []
     report_text: str | None = None
     notices: list[str] = []
@@ -225,8 +231,10 @@ async def _handle_chat(ctx: Context, sender: str, msg: ChatMessage, key: str, te
                 if repo.record_inbound(key, str(msg.msg_id)):
                     await report_payments.request(ctx, sender)
                 return
+            t0 = time.perf_counter()
             replies = await workflow.handle(key, text, research, msg_id=str(msg.msg_id), report_text=report_text,
                                             notices=notices)
+            ctx.logger.info("workflow finished in %.1fs", time.perf_counter() - t0)
         except Exception as exc:  # noqa: BLE001 - never leave the user without an answer
             ctx.logger.exception("workflow error: %s", type(exc).__name__)
             replies = [Reply("Sorry - something went wrong on my side and nothing was saved. Please try again, "
